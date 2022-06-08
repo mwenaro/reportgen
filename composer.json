@@ -1,0 +1,13 @@
+{
+    "name": "vendor/tmtsrg",
+    "description": "Description of project tmtsrg.",
+    "authors": [
+        {
+            "name": "mwero abdalla",
+            "email": "mwerothewebmaker@gmail.com"
+        }
+    ],
+    "require": {
+    
+    }
+}

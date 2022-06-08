@@ -1,0 +1,12 @@
+{
+  "data":  [
+           
+    {"id":1, "name":"mwero", "age":30},
+    {"id":2, "name":"rashid", "age":4},
+    {"id":3, "name":"saum", "age":3}, 
+    {"id":4, "name":"hussein", "age":1},
+    {"id":5, "name":"mlongo", "age":3},
+    {"id":6, "name":"nyawa", "age":1}, 
+    {"id":7, "name":"konza", "age":40}
+    ]
+}

@@ -1,0 +1,2 @@
+_utility.directive('scoreTable',[]);
+

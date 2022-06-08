@@ -1,0 +1,15 @@
+{
+  "name": "barashy/api",
+  "authors": [
+    {
+      "name": "mwero abdalla",
+      "email": "mg@gmail.com"
+    }
+  ],
+  "psr4": {
+    "MongoDB\\": "libs/scr/"
+  },
+  "require": {
+    "mongodb/mongodb": "^1.5"
+  }
+}

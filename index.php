@@ -57,7 +57,7 @@ function mong() {
 //mong();
 //exit();
 
-require 'api/config.php';
+require 'config.php';
 //require 'api/packages/restapi.php';
 require 'api/util/Auth.php';
 if (!defined('LIBS')) {

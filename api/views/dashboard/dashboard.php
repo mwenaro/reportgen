@@ -38,7 +38,7 @@ $js_libs = [
 ?>
 
 <!doctype html>
-<html   ng-app="myApp" ng-cloak="">
+<html   ng-app="myApp" ng-cloak="" >
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -150,7 +150,7 @@ $js_libs = [
                             <span class="icon-bar"></span>
                             <span class="icon-bar"></span>
                         </button>
-                        <a class="navbar-brand" ui-sref="home"><span class="fa fa-dashboard" style="margin-right:10px"> Mwero's ReportGen</a>
+                        <a class="navbar-brand" ui-sref="home"><span class="fa fa-dashboard" style="margin-right:10px">ReportGen</a>
                     </div>
                     <ul class="nav navbar-nav" data-ng-if="isLoggedIn">
                         <li class="active"><a  ui-sref="home"><span class="fa fa-home w3-xlarge" style="margin-right:10px"></a></li>

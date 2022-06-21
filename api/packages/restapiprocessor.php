@@ -157,8 +157,8 @@ class RestApiProcessor {
                     break;
                 case $this->request_method === 'put' || $this->request_method === 'update':
                     _Request::setCorsHearders();
-                    print_r(json_encode(['post_data' => $this->req_data]));
-//                     $rapi->update($this->db_table, $this->where, $this->req_data);
+                    print_r(json_encode(['put_data' => $this->req_data]));
+                    // $rapi->update($this->db_table, $this->where, $this->req_data);
 
 
                     break;
@@ -210,10 +210,11 @@ class RestApiProcessor {
         } else {
 
 //            $this->_load();
-//            $p = _Request::post();
+           
             $this->_load_controller();
             $this->_load_controller_method();
-//            echo json_encode($p);
+          
+
         }
     }
 
@@ -311,6 +312,9 @@ class RestApiProcessor {
 
     function init($req_str = '') {
         $req_string = empty($req_str) ? '/index/' : $req_str;
+        // echo urldecode($req_string);
+        // var_dump();
+        // exit();
 //        $req_string = "users/2/";
 //        $req_string1 = "users/name/mwero/age/30/";
 //        $req_string2 = "users/name/mwero/age/30/?by=date&by=desc&limit=50&dm=getusers";

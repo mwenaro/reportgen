@@ -105,9 +105,9 @@
 
                 //  console.log({'data': teacher, 'request': 'update', 'table': 'teachers'});
                 $http({
-                    method: 'post',
+                    method: 'put',
 //                    url: $scope.url + 'output1.php',
-                    url: paths.api + 'update/login/',
+                    url: paths.api + 'put/api/teachers/teacherId/'+teacher.teacherId,
 //                    url: paths.url + 'api/put/teachers/teacherId/'+teacher.teacherId,
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     data: {'data': teacher, 'request': 'update', 'table': 'teachers'}
@@ -115,16 +115,18 @@
                     // Store response data
 
                     console.log('update tr update', response.data);
+return;
                     if (response.data.flag) {
                         $scope.person = {};
                         $scope.editPersonActive = false;
                         $scope.showForm = false;
-                        $scope.getData();
+                        // $scope.getData();
                         // $scope.data = response.data.data;
 //                        alert(response.data.msg);
                     } else {
                         alert('Sorry, data not updated. An Error Occured');
                     }
+                    $scope.getData();
                 }
                 );
                 //}
@@ -194,6 +196,8 @@
                         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                         data: {'table': 'teachers', 'request': 'insert', 'data': person}
                     }).then(function successCallback(response) {
+
+			    console.log(response.data);
                         alert('Teacher Successfully Added');
                         $scope.data = response.data.data;
                         $scope.person = {};

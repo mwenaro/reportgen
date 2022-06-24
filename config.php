@@ -12,7 +12,8 @@ define('SP', DIRECTORY_SEPARATOR);
 
 // Always provide a TRAILING SLASH (/) AFTER A PATH
 if (!defined('URL')) {
-  define('URL', $protocol.''.$server.':'.$port.SP);
+    $url = $port == 443? realpath(dirname(__FILE__)).'/': $protocol.''.$server.':'.$port.SP;
+  define('URL', $url);
 //	define('URL', realpath(dirname(__FILE__)).SP);
 
 }

@@ -1,8 +1,21 @@
 <?php
+$server = $_SERVER['SERVER_NAME'];
+$port = $_SERVER['SERVER_PORT'];
+$protocol = (isset($_SERVER['HTTPS'])&& $_SERVER['HTTPS']=== 'on')? 'https://':'http://';
+
+if(!defined('SP')){
+
+define('SP', DIRECTORY_SEPARATOR); 
+
+//	define('SP', '/');
+}
 
 // Always provide a TRAILING SLASH (/) AFTER A PATH
 if (!defined('URL')) {
-    define('URL', 'http://127.0.0.1:7173/');
+    $url = $port == 443? realpath(dirname(__FILE__)).'/': $protocol.''.$server.':'.$port.SP;
+  define('URL', $url);
+//	define('URL', realpath(dirname(__FILE__)).SP);
+
 }
 //define('URL', realpath(dirname(__DIR__).'/sms/'));
 if (!defined('SITE_NAME')) {
@@ -10,25 +23,25 @@ if (!defined('SITE_NAME')) {
 }
 
 if (!defined('LIBS')) {
-    define('LIBS', URL.'api/libs/');
+    define('LIBS', URL.'api'.SP.'libs'.SP);
 }
 //define('LIBS', URL.'libs/');
 if (!defined('CTRLS')) {
-    define('CTRLS', URL.'api/controllers/');
+    define('CTRLS', URL.'api'.SP.'controllers'.SP);
 }
 //define('CTRLS', URL.'controllers/');
 if (!defined('PATH_VIEWS')) {
-    define('PATH_VIEWS', 'api/views/');
+    define('PATH_VIEWS', 'api'.SP.'views'.SP);
 }
 if (!defined('CLS')) {
-    define('CLS', URL . 'api/cls/');
+    define('CLS', URL . 'api'.SP.'cls'.SP);
 }
 if (!defined('INCLUDES')) {
-    define('INCLUDES', URL . 'api/views/includes/');
+    define('INCLUDES', URL . 'api'.SP.'views'.SP.'includes'.SP);
 }
 if (!defined('DB_PATH')) {
 //define("DB_PATH", URL."api/resources/shule.sqlite3");
-    define("DB_PATH", realpath(dirname(__FILE__)."/api/resources/shule.sqlite3"));
+    define("DB_PATH", realpath(dirname(__FILE__).SP.'api'.SP.'resources'.SP.'shule.sqlite3'));
 }
 if (!defined('DB_NAME')) {
 //define("DB_NAME", URL."api/resources/shule.sqlite3");
@@ -38,6 +51,7 @@ if (!defined('IS_REST')) {
 //define("DB_NAME", URL."api/resources/shule.sqlite3");
     define("IS_REST", TRUE);
 }
+
 
 
 //require_once  URL.'api/report/libs/fpdf/fpdf.php';

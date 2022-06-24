@@ -158,7 +158,7 @@
         </div> 
     </div>
    
-    <table  class="table table-condensed table-bordered table-hover table-responsive table-striped" data-ng-init=''  >
+    <table  class="table table-condensed table-bordered table-hover table-responsive table-striped" >
         <thead>
             <tr>
                 <th style="display: none">id</th>
@@ -173,7 +173,7 @@
             </tr>
         </thead>
         <!--<tbody data-ng-init="getData({'request': 'all', 'table':app_page,orderBy:'staff_code'});">-->
-        <tbody data-ng-init="getData({'request': 'all', 'table':app_page,orderBy:'last_name'});">
+        <tbody data-ng-init="getData()">
             <tr data-ng-repeat="teacher in data|filter:{'type':typeFilter}">
             
                 <td style="display: none" data-ng-init='id = teacher.teacherId; sep = (!teacher.sub2 == null || !teacher.sub2 == "")?"/":""'>{{teacher.teacherId}}</td>

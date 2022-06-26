@@ -1,0 +1,100 @@
+[26-Jun-2022 09:28:53 UTC] PHP Fatal error:  Uncaught Error: Class 'RestApiProcessor' not found in /home/mwerothe/reports.mwerothewebmaker.com/index.php:87
+Stack trace:
+#0 {main}
+  thrown in /home/mwerothe/reports.mwerothewebmaker.com/index.php on line 87
+[26-Jun-2022 09:39:51 UTC] PHP Fatal error:  Uncaught Error: Class 'RestApiProcessor' not found in /home/mwerothe/reports.mwerothewebmaker.com/index.php:87
+Stack trace:
+#0 {main}
+  thrown in /home/mwerothe/reports.mwerothewebmaker.com/index.php on line 87
+[26-Jun-2022 09:52:11 UTC] PHP Fatal error:  Uncaught Error: Class 'RestApiProcessor' not found in /home/mwerothe/reports.mwerothewebmaker.com/index.php:87
+Stack trace:
+#0 {main}
+  thrown in /home/mwerothe/reports.mwerothewebmaker.com/index.php on line 87
+[26-Jun-2022 09:59:18 UTC] PHP Fatal error:  Uncaught Error: Class 'RestApiProcessor' not found in /home/mwerothe/reports.mwerothewebmaker.com/index.php:91
+Stack trace:
+#0 {main}
+  thrown in /home/mwerothe/reports.mwerothewebmaker.com/index.php on line 91
+[26-Jun-2022 10:01:36 UTC] PHP Fatal error:  Uncaught Error: Class 'RestApiProcessor' not found in /home/mwerothe/reports.mwerothewebmaker.com/index.php:91
+Stack trace:
+#0 {main}
+  thrown in /home/mwerothe/reports.mwerothewebmaker.com/index.php on line 91
+[26-Jun-2022 10:03:00 UTC] PHP Fatal error:  Uncaught Error: Class '_Request' not found in /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApiProcessor.php:72
+Stack trace:
+#0 /home/mwerothe/reports.mwerothewebmaker.com/index.php(91): RestApiProcessor->__construct()
+#1 {main}
+  thrown in /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApiProcessor.php on line 72
+[26-Jun-2022 10:05:15 UTC] PHP Fatal error:  Uncaught Error: Class 'Query_Creator' not found in /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApiProcessor.php:75
+Stack trace:
+#0 /home/mwerothe/reports.mwerothewebmaker.com/index.php(91): RestApiProcessor->__construct()
+#1 {main}
+  thrown in /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApiProcessor.php on line 75
+[26-Jun-2022 10:06:14 UTC] PHP Fatal error:  Uncaught Error: Class 'RestApi' not found in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Bootstrap.php:44
+Stack trace:
+#0 /home/mwerothe/reports.mwerothewebmaker.com/index.php(114): Bootstrap->init()
+#1 /home/mwerothe/reports.mwerothewebmaker.com/index.php(109): boot_init()
+#2 {main}
+  thrown in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Bootstrap.php on line 44
+[26-Jun-2022 10:06:56 UTC] PHP Fatal error:  Uncaught Error: Class 'RestApi' not found in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Bootstrap.php:44
+Stack trace:
+#0 /home/mwerothe/reports.mwerothewebmaker.com/index.php(114): Bootstrap->init()
+#1 /home/mwerothe/reports.mwerothewebmaker.com/index.php(109): boot_init()
+#2 {main}
+  thrown in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Bootstrap.php on line 44
+[26-Jun-2022 10:07:03 UTC] PHP Fatal error:  Uncaught Error: Class 'RestApi' not found in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Bootstrap.php:44
+Stack trace:
+#0 /home/mwerothe/reports.mwerothewebmaker.com/index.php(114): Bootstrap->init()
+#1 /home/mwerothe/reports.mwerothewebmaker.com/index.php(109): boot_init()
+#2 {main}
+  thrown in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Bootstrap.php on line 44
+[26-Jun-2022 10:07:39 UTC] PHP Warning:  require_once(restapiprocessor.php): failed to open stream: No such file or directory in /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApi.php on line 3
+[26-Jun-2022 10:07:39 UTC] PHP Fatal error:  require_once(): Failed opening required 'restapiprocessor.php' (include_path='.:/opt/cpanel/ea-php74/root/usr/share/pear') in /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApi.php on line 3
+[26-Jun-2022 10:13:47 UTC] PHP Warning:  require_once(RestiApiProcessor.php): failed to open stream: No such file or directory in /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApi.php on line 3
+[26-Jun-2022 10:13:47 UTC] PHP Fatal error:  require_once(): Failed opening required 'RestiApiProcessor.php' (include_path='.:/opt/cpanel/ea-php74/root/usr/share/pear') in /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApi.php on line 3
+[26-Jun-2022 10:14:57 UTC] PHP Deprecated:  Unparenthesized `a ? b : c ? d : e` is deprecated. Use either `(a ? b : c) ? d : e` or `a ? b : (c ? d : e)` in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 58
+[26-Jun-2022 10:14:57 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/mwerothe/reports.mwerothewebmaker.com/index.php:82) in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 2
+[26-Jun-2022 10:14:57 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/mwerothe/reports.mwerothewebmaker.com/index.php:82) in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 6
+[26-Jun-2022 10:14:57 UTC] PHP Fatal error:  Uncaught Error: Class 'Mult_Model' not found in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php:9
+Stack trace:
+#0 /home/mwerothe/reports.mwerothewebmaker.com/api/controllers/index.php(6): Controller->__construct()
+#1 /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApiProcessor.php(271): Index->__construct()
+#2 /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApiProcessor.php(214): RestApiProcessor->_load_controller()
+#3 /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Bootstrap.php(46): RestApiProcessor->rest_init(Object(RestApi))
+#4 /home/mwerothe/reports.mwerothewebmaker.com/index.php(114): Bootstrap->init()
+#5 /home/mwerothe/reports.mwerothewebmaker.com/index.php(109): boot_init()
+#6 {main}
+  thrown in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 9
+[26-Jun-2022 10:22:25 UTC] PHP Parse error:  syntax error, unexpected ';' in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 58
+[26-Jun-2022 10:23:42 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/mwerothe/reports.mwerothewebmaker.com/index.php:82) in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 2
+[26-Jun-2022 10:23:42 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/mwerothe/reports.mwerothewebmaker.com/index.php:82) in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 6
+[26-Jun-2022 10:23:43 UTC] PHP Fatal error:  Uncaught Error: Class 'Mult_Model' not found in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php:9
+Stack trace:
+#0 /home/mwerothe/reports.mwerothewebmaker.com/api/controllers/index.php(6): Controller->__construct()
+#1 /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApiProcessor.php(271): Index->__construct()
+#2 /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApiProcessor.php(214): RestApiProcessor->_load_controller()
+#3 /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Bootstrap.php(46): RestApiProcessor->rest_init(Object(RestApi))
+#4 /home/mwerothe/reports.mwerothewebmaker.com/index.php(114): Bootstrap->init()
+#5 /home/mwerothe/reports.mwerothewebmaker.com/index.php(109): boot_init()
+#6 {main}
+  thrown in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 9
+[26-Jun-2022 10:26:47 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/mwerothe/reports.mwerothewebmaker.com/index.php:82) in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 2
+[26-Jun-2022 10:26:47 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/mwerothe/reports.mwerothewebmaker.com/index.php:82) in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 6
+[26-Jun-2022 10:26:47 UTC] PHP Warning:  require_once(database.php): failed to open stream: No such file or directory in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Mult_Model.php on line 3
+[26-Jun-2022 10:26:47 UTC] PHP Fatal error:  require_once(): Failed opening required 'database.php' (include_path='.:/opt/cpanel/ea-php74/root/usr/share/pear') in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Mult_Model.php on line 3
+[26-Jun-2022 10:27:11 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/mwerothe/reports.mwerothewebmaker.com/index.php:82) in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 2
+[26-Jun-2022 10:27:11 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/mwerothe/reports.mwerothewebmaker.com/index.php:82) in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 6
+[26-Jun-2022 10:27:11 UTC] PHP Warning:  require_once(database.php): failed to open stream: No such file or directory in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Mult_Model.php on line 3
+[26-Jun-2022 10:27:11 UTC] PHP Fatal error:  require_once(): Failed opening required 'database.php' (include_path='.:/opt/cpanel/ea-php74/root/usr/share/pear') in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Mult_Model.php on line 3
+[26-Jun-2022 10:28:40 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/mwerothe/reports.mwerothewebmaker.com/index.php:82) in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 2
+[26-Jun-2022 10:28:40 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/mwerothe/reports.mwerothewebmaker.com/index.php:82) in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 6
+[26-Jun-2022 10:28:40 UTC] PHP Fatal error:  Uncaught Error: Class '_Date_Tracker' not found in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php:14
+Stack trace:
+#0 /home/mwerothe/reports.mwerothewebmaker.com/api/controllers/index.php(6): Controller->__construct()
+#1 /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApiProcessor.php(271): Index->__construct()
+#2 /home/mwerothe/reports.mwerothewebmaker.com/api/packages/RestApiProcessor.php(214): RestApiProcessor->_load_controller()
+#3 /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Bootstrap.php(46): RestApiProcessor->rest_init(Object(RestApi))
+#4 /home/mwerothe/reports.mwerothewebmaker.com/index.php(114): Bootstrap->init()
+#5 /home/mwerothe/reports.mwerothewebmaker.com/index.php(109): boot_init()
+#6 {main}
+  thrown in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 14
+[26-Jun-2022 10:30:09 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/mwerothe/reports.mwerothewebmaker.com/index.php:82) in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 2
+[26-Jun-2022 10:30:09 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/mwerothe/reports.mwerothewebmaker.com/index.php:82) in /home/mwerothe/reports.mwerothewebmaker.com/api/libs/Controller.php on line 6

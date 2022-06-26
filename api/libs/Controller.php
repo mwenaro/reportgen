@@ -55,7 +55,7 @@ class Controller {
                 $error[] = 'Empty Fields';
             }
         }
-        return empty($array) ? false : !empty($error) ? false : true;
+        return (empty($array) || !empty($error))? true  : false;
     }
 
 }

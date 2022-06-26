@@ -77,13 +77,17 @@ spl_autoload_register(function ($class) {
     ];
 
     foreach ($sources as $file) {
+
         if (is_file($file)) {
+//echo '<br> '.$file . 'is found <br>';
             require_once $file;
-        }
+        }else {
+//echo '<h2 style= "color:red;">'.$file. '</h2>';
+}
     }
 });
 
-//require_once 'API.php';
+require_once 'API.php';
 $api = new RestApiProcessor();
 //$api= new API();
 //$payload = [

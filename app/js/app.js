@@ -7,10 +7,8 @@ var myurl = location.protocol+'//'+location.hostname+':'+location.port+'/';
 app.constant('url',myurl);
 
 app.constant('PATHS', {
-myurl:location.protocol+'//'+location.hostname+':'+location.port+'/'
-,        
-api: myurl+'api/',
-        app: myurl+'app/',
+	api: myurl+'api/',
+        app:myurl+'app/',
         url: myurl
     });
 // </ *********************** PATHS   ********************* >

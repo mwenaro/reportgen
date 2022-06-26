@@ -2,7 +2,9 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-
+echo '<pre>';
+var_dump($_SERVER);
+exit();
 header("Access-Control-Allow-Origin:*");
 header("Access-Control-Allow-Methods:FETCH,POST, GET , OPTIONS, DELETE, PUT ");
 header("Access-Control-Allow-Max-Age:3000");

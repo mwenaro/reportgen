@@ -90,14 +90,14 @@ spl_autoload_register(function ($class) {
 require_once 'API.php';
 $api = new RestApiProcessor();
 //$api= new API();
-//$payload = [
-//    'req_met' => $api->request_method(),
-//    'ends' => $api->get_endpoints,
-//    'tabl' => $api->db_table(),
-//    'tabl' => $api->db_table(),
-//    'where' => $api->where()];
-//echo json_encode($payload);
-//exit();
+$payload = [
+    'req_met' => $api->request_method(),
+    'ends' => $api->get_endpoints,
+    'tabl' => $api->db_table(),
+    'tabl' => $api->db_table(),
+    'where' => $api->where()];
+echo json_encode($payload);
+exit();
 $file = 'api/endpoints/' . $api->controller_name . '.php';
 //var_dump($file);
 //exit();

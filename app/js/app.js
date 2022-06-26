@@ -1,17 +1,17 @@
 var app = angular.module('myApp', ['ui.router', 'ngStorage','ngResource', 'myUtility']);
 (function (app) {
-var myurl = location.protocol+'//'+location.hostname+':'+location.port;
+var myurl = location.protocol+'//'+location.hostname+':'+location.port+'/';
 
 
 //< *********************** PATHS   ********************* >
 app.constant('url',myurl);
 
 app.constant('PATHS', {
-myurl:location.protocol+'//'+location.hostname+':'+location.port
+myurl:location.protocol+'//'+location.hostname+':'+location.port+'/'
 ,        
-api: 'http://127.0.0.1:7173/api/hello/',
-        app: 'http://127.0.0.1:7173/app/',
-        url: 'http://127.0.0.1:7173/'
+api: myurl+'api/',
+        app: myurl+'app/',
+        url: myurl
     });
 // </ *********************** PATHS   ********************* >
 

@@ -21,6 +21,7 @@ if (!defined('URL')) {
 
 if (!defined('URI')) {
     $uri = ($port == 443 ||  $_SERVER['HTTPS']== 'on')? $protocol.''.$server.'/' : $protocol.''.$server.':'.$port.SP;
+    $url = $serevr != '127.0.0.1'? "$protocol$server/": "$protocol$server:$port/";
   define('URI', $url);
 //	define('URL', realpath(dirname(__FILE__)).SP);
 

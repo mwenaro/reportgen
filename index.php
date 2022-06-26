@@ -96,8 +96,8 @@ $payload = [
     'tabl' => $api->db_table(),
     'tabl' => $api->db_table(),
     'where' => $api->where()];
-echo json_encode($payload);
-exit();
+//echo json_encode($payload);
+//exit();
 $file = 'api/endpoints/' . $api->controller_name . '.php';
 //var_dump($file);
 //exit();

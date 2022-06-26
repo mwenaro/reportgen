@@ -43,7 +43,7 @@
                 return anangu;
             };
             function  setAnangu(atu) {
-//                return $http.post('http://127.0.0.1:7173/api/output1.php', {request: 'SELECT * FROM forms'}).then(function (response) {
+//                return $http.post(paths.url+'api/output1.php', {request: 'SELECT * FROM forms'}).then(function (response) {
                 return $http.post(paths.api+'output1.php', {request: 'SELECT * FROM forms'}).then(function (response) {
                     anangu = response.data;
                     // console.log(response);
@@ -136,7 +136,7 @@
             };
             var them;
             this.teacher.getThem = function (request) {
-//                return $http.post('http://127.0.0.1:7173/api/output1.php', request).then(function (response) {
+//                return $http.post(paths.url+'api/output1.php', request).then(function (response) {
                 return $http.post(paths.api+'output1.php', request).then(function (response) {
                     them = response.data;
                     console.log(response);

@@ -15,7 +15,7 @@
             $scope.subject = {};
             $scope.app_page = 'subjects';
             $scope.inc_name = 'add';
-            $scope.inc_path = $scope.url + 'views/subject/inc/' + $scope.inc_name + '_subs.php';
+            $scope.inc_path = $scope.url + 'api/views/subject/inc/' + $scope.inc_name + '_subs.php';
             $scope.req1;
             /*
              * Workload 
@@ -210,7 +210,7 @@
                 console.log(request);
                 $http({
                     method: 'post',
-                    url: 'http://127.0.0.1:7173/subject/get_row',
+                    url: paths.url+'subject/get_row',
                     //url: $scope.url+'output1.php',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     data: request

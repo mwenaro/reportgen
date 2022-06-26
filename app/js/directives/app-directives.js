@@ -1,5 +1,5 @@
 (function (app) {
-    var path = 'http://127.0.0.1:7173/app/';
+    var path = paths.url+'app/';
 
     app.direcive('popUpForm', [function () {
 

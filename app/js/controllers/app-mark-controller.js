@@ -65,7 +65,7 @@
 
                 };
 
-                $http.post('http://127.0.0.1:7173/join/exams.examId/' + mk.post_examId + '/?by=subjects.short_name,courses.form',
+                $http.post(paths.url+'join/exams.examId/' + mk.post_examId + '/?by=subjects.short_name,courses.form',
 //                $http.post($scope.url + 'output1.php',
                         {'data': data}
                 // request
@@ -124,7 +124,7 @@
                 console.log(s);
                 if (!angular.equals({}, mk.current_test)) {
 
-                    $http.post('http://127.0.0.1:7173/get/login',
+                    $http.post(paths.url+'get/login',
                             {request: s
 
                             }).then(function (res) {
@@ -159,7 +159,7 @@
                 console.log(mk.current_test);
                 if (!angular.equals({}, mk.current_test)) {
 
-                    $http.post('http://127.0.0.1:7173/get/login',
+                    $http.post(paths.url+'get/login',
                             {request: "SELECT name,adm,form,studentId FROM students WHERE studentId NOT IN (SELECT studentId FROM marks WHERE examId IS '" + mk.post_examId + "' AND subjectId IS '"
                                         + mk.current_test.subjectId +
                                         "') AND form IS '"
@@ -279,7 +279,7 @@
 SELECT markId from marks where studentId ='" + sId + "' and testId ='" + tId + "') ";
 
                 $http.post(
-                        "http://127.0.0.1:7173/sql",
+                        paths.url+"sql",
                         {data: {sql: sql}}).then(function (res) {
                     console.log("delete res", res.data);
                     if (res.data.flag) {

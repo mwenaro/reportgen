@@ -52,7 +52,7 @@
 
                 };
 //                _data.exams.tests(test.post_examId).then(function (res) {
-                $http.post("http://127.0.0.1:7173/join/tests.examId/" + sel.post_examId + "/?by=subjects.short_name,courses.form",
+                $http.post(paths.url+"join/tests.examId/" + sel.post_examId + "/?by=subjects.short_name,courses.form",
                         {data: data}
 
                 ).then(function (res) {
@@ -126,7 +126,7 @@
                 if (!angular.equals([], sel.current_test)) {
 //                    console.log(sel.current_test);
 //                    _data.exists(
-                    $http.post("http://127.0.0.1:7173/sql/",
+                    $http.post(paths.url+"sql/",
                             {data:{sql: "SELECT name,adm,form,studentId FROM students WHERE studentId NOT IN (SELECT studentId FROM sub_selecs WHERE courseId IS '" + sel.current_test.courseId + "' AND subjectId IS '"
                                         + sel.current_test.subjectId +
                                         "') AND form IS '"

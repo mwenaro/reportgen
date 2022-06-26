@@ -83,7 +83,7 @@
 
                 };
 //                _data.exams.tests(test.post_examId).then(function (res) {
-                $http.post("http://127.0.0.1:7173/join/tests.examId/" + test.post_examId + "/?by=subjects.short_name,courses.form",
+                $http.post(paths.url+"join/tests.examId/" + test.post_examId + "/?by=subjects.short_name,courses.form",
                         {data:data}
 
                         ).then(function (res) {
@@ -117,7 +117,7 @@
                     max_score: cz.max_score,
                     examId: cz.examId
                 };
-                $http.post('http://127.0.0.1:7173/update/login', {request: 'update', data: test, table: 'tests'}).then(function (res) {
+                $http.post(paths.url+'update/login', {request: 'update', data: test, table: 'tests'}).then(function (res) {
                     console.log(res.data);
                     if (res.data.flag) {
                         alert('Course Updated');
@@ -154,7 +154,7 @@
                 };
 //               ? test.current_test = _test;
 //                test.editActive = true;
-                $http.post('http://127.0.0.1:7173/add/login', {request: 'insert', data: _test, table: 'tests'}).then(function (res) {
+                $http.post(paths.url+'add/login', {request: 'insert', data: _test, table: 'tests'}).then(function (res) {
                     console.log(res.data);
 
                     console.log('---------------test-----------');

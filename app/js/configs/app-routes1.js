@@ -1,10 +1,10 @@
 (function (app) {
     'use strict';
-    app.config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
-            var appPaths = {
-                url: 'http://127.0.0.1:7173/',
-                app1: 'http://127.0.0.1:7173/app/'
-            };
+    app.config(['$stateProvider', '$urlRouterProvider', 'PATHS',function ($stateProvider, $urlRouterProvider,appPaths) {
+            // var appPaths = {
+            //     url: 'http://127.0.0.1:7173/',
+            //     app: 'http://127.0.0.1:7173/app/'
+            // };
 
             $urlRouterProvider.otherwise('/login');
             $stateProvider.
@@ -12,13 +12,13 @@
                         url: '/home',
                 views:{
                     header:{
-                       templateUrl: appPaths.app1 + 'views/header-view.php' 
+                       templateUrl: appPaths.app + 'views/header-view.php' 
                     },
                     main:{
-                       templateUrl: appPaths.app1 + 'views/main-view.php' 
+                       templateUrl: appPaths.app + 'views/main-view.php' 
                     },
                     footer:{
-                       templateUrl: appPaths.app1 + 'views/footer-view.php' 
+                       templateUrl: appPaths.app + 'views/footer-view.php' 
                     }
                     
                         
@@ -27,7 +27,7 @@
                     state('user', {
                         url: '/user/:userId',
 //                        url: '/user/:userId/:username:/role',
-                        templateUrl: appPaths.app1 + 'views/user.php',
+                        templateUrl: appPaths.app + 'views/user.php',
                         controller: function (authServ, $state, $stateParams) {
 
 //                            if (authServ.login.getId() === 0) {
@@ -41,56 +41,56 @@
                     }).
                     state('teacher', {
                         url: '/teacher',
-                        templateUrl: appPaths.app1 + 'views/teacher-view.php',
+                        templateUrl: appPaths.app + 'views/teacher-view.php',
                         controller: 'trsController'
                                 //                            template:'<p class="w3-blue">My Home Page</p>'
                     }).
                     state('student', {
                         url: '/student',
-                        templateUrl: appPaths.app1 + 'views/student-view.php',
+                        templateUrl: appPaths.app + 'views/student-view.php',
                         controller: 'dataController'
 
                     }).
                     state('admin', {
                         url: '/admin',
-                        templateUrl: appPaths.app1 + 'views/admin-view.php',
+                        templateUrl: appPaths.app + 'views/admin-view.php',
                         controller: 'adminController'
 
                     }).
                     state('mark', {
                         url: '/mark',
-                        templateUrl: appPaths.app1 + 'views/mark-view.php',
+                        templateUrl: appPaths.app + 'views/mark-view.php',
                         controller: 'markController'
 
                     }).
                     state('subject', {
                         url: '/subject',
-                        templateUrl: appPaths.app1 + 'views/subject-view.php',
+                        templateUrl: appPaths.app + 'views/subject-view.php',
                         controller: 'subsController'
 
                     }).
                     state('report', {
                         url: '/report',
-                        templateUrl: appPaths.app1 + 'views/report-view.php',
+                        templateUrl: appPaths.app + 'views/report-view.php',
                         controller: 'reportController'
 
                     }).
                     state('password', {
                         url: '/password',
-                        templateUrl: appPaths.app1 + 'views/password-view.php',
+                        templateUrl: appPaths.app + 'views/password-view.php',
                         controller: 'pwdController',
                         controllerAs: 'pwd'
                                 // controllerAs:'login'
                     }).
                     state('logout', {
                         url: '/logout',
-                        templateUrl: appPaths.app1 + 'views/logout-view.php',
+                        templateUrl: appPaths.app + 'views/logout-view.php',
                         controller: 'logoutController'
                                 // controllerAs:'login'
                     }).
                     state('login', {
                         url: '/login',
-                        templateUrl: appPaths.app1 + 'views/login-view.php',
+                        templateUrl: appPaths.app + 'views/login-view.php',
                         controller: 'loginController',
                         controllerAs: 'login'
                     });
@@ -135,12 +135,12 @@
         }]);
 
     /************************************************************************************************/
-    app.controller('loginController', ['$http', '$location', '$state', '$interpolate', 'pathGen', 'authServ', function (h, l, s, i, pg, as) {
+    app.controller('loginController', ['$http', '$location', '$state', '$interpolate', 'pathGen', 'authServ','PATHS', function (h, l, s, i, pg, as,appPaths) {
             var login = this;
             login.user = {};
             login.closeForm = false;
             login.loginUser = function (event) {
-                h.post('http://127.0.0.1:7173/php/login.php', login.user /*{table:'users',where:login.user,request:'get_row'}*/).then(function successCallback(response) {
+                h.post(appPaths.api+'login.php', login.user /*{table:'users',where:login.user,request:'get_row'}*/).then(function successCallback(response) {
                     if (response.data.flag) {
                         console.log(response.data.user);
 //                                 var user = response.data.user;

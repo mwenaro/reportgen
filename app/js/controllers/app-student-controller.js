@@ -9,7 +9,7 @@
             $scope.person = {};
             $scope.app_page;
             $scope.inc_name = 'add';
-            $scope.inc_path = $scope.url + '/views/student/inc/' + $scope.inc_name + '.php';
+            $scope.inc_path = $scope.url + '/api/views/student/inc/' + $scope.inc_name + '.php';
 
 //  handling the submit button for the form
             $scope.addPerson = function () {
@@ -62,7 +62,7 @@
                     method: 'post',
 //                    url: 'http://127.0.0.1:7173/login/update/',
 //                    url: 'http://127.0.0.1:7173/update/login/',
-                    url: 'http://127.0.0.1:7173/api/put/students/'+$scope.person.studentId,
+                    url: paths.api+'put/students/'+$scope.person.studentId,
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     data: {request: 'update', data: $scope.person, table: 'students'}
                 }).then(function successCallback(response) {
@@ -98,7 +98,7 @@
 
             $scope.changeInclude = function (inc_name) {
                 $scope.inc_name = inc_name;
-                $scope.inc_path = $scope.url + 'views/student/inc/' + $scope.inc_name + '.php';
+                $scope.inc_path = $scope.url + 'api/views/student/inc/' + $scope.inc_name + '.php';
                 $scope.getInclude();
 
             };
@@ -120,7 +120,7 @@
             };
 
             $scope.show_app_page = function () {
-                $http.get('http://127.0.0.1:7173/student/add').then(function () {
+                $http.get(paths.url+'/student/add').then(function () {
                     console.log('gone to show app_page');
                 });
             };

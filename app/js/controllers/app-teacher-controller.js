@@ -18,7 +18,7 @@
             $scope.person = {};
             $scope.app_page = 'teachers';
             $scope.inc_name = 'add';
-            $scope.inc_path = $scope.url + 'views/teacher/inc/' + $scope.inc_name + '_trs.php';
+            $scope.inc_path = $scope.url + 'api/views/teacher/inc/' + $scope.inc_name + '_trs.php';
             $scope.req1;
             // $scope.password_confirm='';
 //            $scope.workload = {};
@@ -163,7 +163,7 @@ return;
              */
             $scope.removeTeacher = function (id) {
                 $http.post(
-                        'http://127.0.0.1:7173/' + 'delete/login',
+                        paths.url + 'delete/login',
                         {data: {'isDeleted': 1}, id: id, 'table': 'teachers', 'request': 'delete'}
                 ).then(function successCallback(response) {
                     console.log(response.data);
@@ -219,7 +219,7 @@ return;
              */
             $scope.changeInclude = function (inc_name) {
                 $scope.inc_name = inc_name;
-                $scope.inc_path = $scope.url + 'views/teacher/inc/' + $scope.inc_name + '_trs.php';
+                $scope.inc_path = $scope.url + 'api/views/teacher/inc/' + $scope.inc_name + '_trs.php';
                 // alert($scope.inc_path);
                 $scope.getInclude();
 
@@ -237,7 +237,7 @@ return;
                 console.log(request);
                 $http({
                     method: 'post',
-                    url: 'http://127.0.0.1:7173/get_row/teacher/',
+                    url: paths.url+'get_row/teacher/',
                     //url: $scope.url+'output1.php',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     data: request
@@ -290,7 +290,7 @@ return;
 
             $scope.getWorkload = function (id) {
 //                var sql = "SELECT * FROM workloads  ";
-                $http.get('http://127.0.0.1:7173/api/workloads/id/' + id
+                $http.get(paths.api+'workloads/id/' + id
 //                $http.post($scope.url + 'output1.php',
 //                        {'data': {'sql': sql}}
                         // request
@@ -338,7 +338,7 @@ return;
 
                 };
 //                var sql="SELECT * FROM workloads  ";
-                $http.post('http://127.0.0.1:7173/join/classes.hasGraduated=0/?by=courses.form,subjects.short_name',
+                $http.post(paths.url+'join/classes.hasGraduated=0/?by=courses.form,subjects.short_name',
 //                $http.post($scope.url + 'output1.php',
                         {'data': data}
                 // request
@@ -378,7 +378,7 @@ return;
 
                 };
 //                var sql="SELECT * FROM workloads  ";
-                $http.post('http://127.0.0.1:7173/join/classes.hasGraduated=0/?by=courses.form,subjects.short_name',
+                $http.post(paths.url+'join/classes.hasGraduated=0/?by=courses.form,subjects.short_name',
 //                $http.post($scope.url + 'output1.php',
                         {'data': data}
                 // request
@@ -403,7 +403,7 @@ return;
                     lessons: wk.lessons
                 };
 //                console.log('post workload', workloadpost);
-                $http.post('http://127.0.0.1:7173/api/workloads',
+                $http.post(paths.api+'/workloads',
                         {data:workloadpost }
                 // request
                 ).then(function successCallback(response) {

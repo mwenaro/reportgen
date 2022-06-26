@@ -45,33 +45,33 @@ $js_libs = [
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>lovely site</title>
         <!--Core Js libs-->
-        <script src="<?php echo URL; ?>public/js/angular/angular.min.js" type="text/javascript"></script>
-        <script src="<?php echo URL; ?>public/js/angular/angular-route.min.js" type="text/javascript"></script>
-        <script src="<?php echo URL; ?>public/js/angular/angular-ui-router 1.0.js" type="text/javascript"></script>
-        <script src="<?php echo URL; ?>public/js/angular/ngStorage.min.js" type="text/javascript"></script>
-        <script src="<?php echo URL; ?>public/js/angular/ngStorage.js" type="text/javascript"></script>
-        <script src="<?php echo URL; ?>public/js/angular/angular-resource.min.js" type="text/javascript"></script>
-        <script src="<?php echo URL; ?>public/js/jquery.js" type="text/javascript"></script>
+        <script src="<?php echo URI; ?>public/js/angular/angular.min.js" type="text/javascript"></script>
+        <script src="<?php echo URI; ?>public/js/angular/angular-route.min.js" type="text/javascript"></script>
+        <script src="<?php echo URI; ?>public/js/angular/angular-ui-router 1.0.js" type="text/javascript"></script>
+        <script src="<?php echo URI; ?>public/js/angular/ngStorage.min.js" type="text/javascript"></script>
+        <script src="<?php echo URI; ?>public/js/angular/ngStorage.js" type="text/javascript"></script>
+        <script src="<?php echo URI; ?>public/js/angular/angular-resource.min.js" type="text/javascript"></script>
+        <script src="<?php echo URI; ?>public/js/jquery.js" type="text/javascript"></script>
 
         <!--Helper Js libs-->
-        <script src="<?php echo URL; ?>app/js/modules/utility-module.js" type="text/javascript"></script>
+        <script src="<?php echo URI; ?>app/js/modules/utility-module.js" type="text/javascript"></script>
         <!--App Js libs-->
-        <script src="<?php echo URL; ?>app/js/app.js" type="text/javascript"></script>     
+        <script src="<?php echo URI; ?>app/js/app.js" type="text/javascript"></script>     
 
         <?php foreach ($js_libs as $folder_name => $files) { ?>  
             <?php foreach ($files as $file): ?>
-                <script src="<?php echo URL; ?>app/js/<?php echo $folder_name; ?>/app-<?php echo $file ?>-<?php echo rtrim($folder_name, 's') ?>.js" type="text/javascript"></script> 
+                <script src="<?php echo URI; ?>app/js/<?php echo $folder_name; ?>/app-<?php echo $file ?>-<?php echo rtrim($folder_name, 's') ?>.js" type="text/javascript"></script> 
             <?php endforeach; ?>
         <?php } ?> 
-        <script src="<?php echo URL; ?>app/components/compos/compos-component.js" type="text/javascript"></script>
-<!--       
+        <script src="<?php echo URI; ?>app/components/compos/compos-component.js" type="text/javascript"></script>
+      
 
-        <!--App stylesheets  -->
-        <link href="<?php echo URL; ?>public/css/font-awesome.css" rel="stylesheet" type="text/css"/>
-        <link href="<?php echo URL; ?>public/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
-        <link rel="stylesheet" href="<?php echo URL; ?>public/css/default1.css"  type="text/css"/>    
-        <link rel="stylesheet" href="<?php echo URL; ?>public/css/w3.css"  type="text/css"/>    
-        <link rel="stylesheet" href="<?php echo URL; ?>public/css/styles.css"  type="text/css"/>  
+        <!-- App stylesheets  -->
+        <link href="<?php echo URI; ?>public/css/font-awesome.css" rel="stylesheet" type="text/css"/>
+        <link href="<?php echo URI; ?>public/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+        <link rel="stylesheet" href="<?php echo URI; ?>public/css/default1.css"  type="text/css"/>    
+        <link rel="stylesheet" href="<?php echo URI; ?>public/css/w3.css"  type="text/css"/>    
+        <link rel="stylesheet" href="<?php echo URI; ?>public/css/styles.css"  type="text/css"/>  
 
         <!--/***********************************           buttton *******************************************/-->
         <!--        <link href="../public/js/app/button/button.css" rel="stylesheet" type="text/css"/>
@@ -201,8 +201,8 @@ $js_libs = [
 
 <?php if (2 === 3): ?>
             <script src="../public/js/jquery.js" type="text/javascript"></script>
-            <script src="<?php echo URL; ?>public/js/jquery/jquery-2.2.4.min.js"></script>
-            <script src="<?php echo URL; ?>public/js/bootstrap/bootstrap.min.js"></script>
+            <script src="<?php echo URI; ?>public/js/jquery/jquery-2.2.4.min.js"></script>
+            <script src="<?php echo URI; ?>public/js/bootstrap/bootstrap.min.js"></script>
 
 <?php endif; ?>
 

@@ -17,6 +17,15 @@ if (!defined('URL')) {
 //	define('URL', realpath(dirname(__FILE__)).SP);
 
 }
+//Resouce URI
+
+if (!defined('URI')) {
+    $uri = ($port == 443 &&  $_SERVER['HTTPS']=== 'on')? $protocol.''.$server.'/' : $protocol.''.$server.':'.$port.SP;
+  define('URI', $url);
+//	define('URL', realpath(dirname(__FILE__)).SP);
+
+}
+
 //define('URL', realpath(dirname(__DIR__).'/sms/'));
 if (!defined('SITE_NAME')) {
     define('SITE_NAME', 'sms');

@@ -32,25 +32,6 @@
                         ) {
                     var login = this;
                     login.person = {};
-//                    var res=$resource(paths.url+'api/get/');
-//                    var res=$resource(paths.url+'api/get');
-//                    var res=$resource(paths.api+'users.json/:id',{id:'@id'});
-////                    var res1=$resource(paths.url+'api/s1/:id',{id:'@id'});
-////                    var res=$resource('http://127.0.0.1:7173/api/s1');
-////                    var res1=h.get(paths.url+'api/s1').then(function(res){
-//                    var res1=h.get(paths.api+'users.json').then(function(res){
-//                        console.log(res);
-//                    return res.data;
-//                    });
-////                    console.log(res1);
-//                    console.log(res.get({aid:2}));
-////                    console.log(res1.get({id:1}));
-
-                    /**
-                     * add teacher
-                     */
-                    //console.log(angular.element('div'));
-
                     login.error = {};
                     login.error.pwd = {};
                     login.error.staff = false;

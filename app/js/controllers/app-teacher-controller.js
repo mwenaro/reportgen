@@ -13,7 +13,7 @@
             $scope.mimi = 'mwero abdalla';
             $scope.password_confirm = '';
 //            $scope.url = 'http://127.0.0.1:7173/api/';
-            $scope.url = paths.api;
+            $scope.url = paths.url;
             $scope.default_include = $scope.url + 'dashboard.php';
             $scope.person = {};
             $scope.app_page = 'teachers';
@@ -57,7 +57,7 @@
              */
             $scope.getData = function () {
 
-                $http.get(paths.api+'teachers/isPresent/1/?order=ASC&by=staff_code',
+                $http.get(paths.dataapi+'teachers/isPresent/1/?order=ASC&by=staff_code',
 //                $http.post($scope.url + 'output1
 //                
 //                .php',
@@ -76,7 +76,7 @@
 //            *************************************
             $scope.getTeachers = function () {
 
-                $http.post($scope.url + 'output1.php',
+                $http.post($scope.url + 'api/output1.php',
                         {'request': 'all', 'table': 'teachers'}
                 // request
                 ).then(function successCallback(response) {
@@ -107,7 +107,7 @@
                 $http({
                     method: 'put',
 //                    url: $scope.url + 'output1.php',
-                    url: paths.api + 'put/api/teachers/teacherId/'+teacher.teacherId,
+                    url: paths.api + 'put/dataapi/teachers/teacherId/'+teacher.teacherId,
 //                    url: paths.url + 'api/put/teachers/teacherId/'+teacher.teacherId,
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     data: {'data': teacher, 'request': 'update', 'table': 'teachers'}
@@ -142,7 +142,7 @@ return;
             $scope.getTeacher = function (id) {
                 $http({
                     method: 'post',
-                    url: $scope.url + 'output1.php',
+                    url: $scope.url + 'api/output1.php',
                     //url: $scope.url+'output1.php',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     data: {'id': id, 'table': 'teachers', 'request': 'get_row'}
@@ -191,7 +191,7 @@ return;
 
                     $http({
                         method: 'post',
-                        url: $scope.url + 'output1.php',
+                        url: $scope.url + 'api/output1.php',
                         //url: $scope.url+'output1.php',
                         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                         data: {'table': 'teachers', 'request': 'insert', 'data': person}
@@ -262,7 +262,7 @@ return;
                 // console.log(re);
                 $http({
                     method: 'post',
-                    url: $scope.url + 'output1.php',
+                    url: $scope.url + 'api/output1.php',
                     //url: 'http://127.0.0.1:7173/pro/access_db.php',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     data: re
@@ -290,7 +290,7 @@ return;
 
             $scope.getWorkload = function (id) {
 //                var sql = "SELECT * FROM workloads  ";
-                $http.get(paths.api+'workloads/id/' + id
+                $http.get(paths.dataapi+'workloads/id/' + id
 //                $http.post($scope.url + 'output1.php',
 //                        {'data': {'sql': sql}}
                         // request
@@ -403,7 +403,7 @@ return;
                     lessons: wk.lessons
                 };
 //                console.log('post workload', workloadpost);
-                $http.post(paths.api+'/workloads',
+                $http.post(paths.url+'dataapi/workloads',
                         {data:workloadpost }
                 // request
                 ).then(function successCallback(response) {

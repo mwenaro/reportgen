@@ -1,11 +1,7 @@
 (function (app) {
     'use strict';
     app.config(['$stateProvider', '$urlRouterProvider', 'PATHS',function ($stateProvider, $urlRouterProvider,appPaths) {
-            // var appPaths = {
-            //     url: 'http://127.0.0.1:7173/',
-            //     app: 'http://127.0.0.1:7173/app/'
-            // };
-
+           
             $urlRouterProvider.otherwise('/login');
             $stateProvider.
                     state('home', {

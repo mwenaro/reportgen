@@ -88,11 +88,7 @@ class RestApiProcessor {
      * Fetches the $_GET from 'url'
      */
     private function _getReqString() {
-//        echo '<pre>';
-////        
-//        print_r(($_SERVER));
-//        print_r($_SERVER["QUERY_STRING"]);
-////       exit();
+
         $p = $this->_getUrlFromRequest();
 
         $q_string = isset($_SERVER["QUERY_STRING"]) ? "/?" . $_SERVER["QUERY_STRING"] : NULL;
@@ -218,7 +214,7 @@ class RestApiProcessor {
         }
     }
 
-    function _load() {
+    function _load() { 
         $file = $this->_controllerPath . $this->controller_name . '.php';
         $file1 = $this->_controllerPath . $this->controller_method . '.php';
 
@@ -356,7 +352,7 @@ class RestApiProcessor {
         /**
          * check if is rest api
          */
-        $this->is_restapi = strpos(strtolower($url), 'api') !== false ? true : false;
+        $this->is_restapi = strpos(strtolower($url), 'dataapi') !== false ? true : false;
         $url = $this->is_restapi ? substr($url, 3) : $url;
 
         /**

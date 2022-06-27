@@ -10,7 +10,7 @@
             $scope.editSubjectActive = false;
             $scope.data;
             $scope.password_confirm;
-            $scope.url = paths.api;
+            $scope.url = paths.url;
             $scope.default_include = $scope.url + 'add_subs.php';
             $scope.subject = {};
             $scope.app_page = 'subjects';
@@ -39,7 +39,7 @@
              */
             $scope.getData = function () {
 
-                $http.post($scope.url + 'output1.php',
+                $http.post($scope.url + 'api/output1.php',
                         {'request': 'all', 'table': 'subjects'}
                 // request
                 ).then(function successCallback(response) {
@@ -53,7 +53,7 @@
 //            *************************************
             $scope.getTeachers = function () {
 
-                $http.post($scope.url + 'output1.php',
+                $http.post($scope.url + 'api/output1.php',
                         {'request': 'all', 'table': 'teachers'}
                 // request
                 ).then(function successCallback(response) {
@@ -117,7 +117,7 @@
             $scope.getSubject = function (id) {
                 $http({
                     method: 'post',
-                    url: $scope.url + 'output1.php',
+                    url: $scope.url + 'api/output1.php',
                     //url: $scope.url+'output1.php',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     data: {'id': id, 'table': 'subjects', 'request': 'get_row'}
@@ -166,7 +166,7 @@
             $scope.addSubject = function (subject) {
                 $http({
                     method: 'post',
-                    url: $scope.url + 'output1.php',
+                    url: $scope.url + 'api/output1.php',
                     //url: $scope.url+'output1.php',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     data: {'table': 'subjects', 'request': 'insert', 'data': subject}
@@ -235,7 +235,7 @@
                 // console.log(re);
                 $http({
                     method: 'post',
-                    url: $scope.url + 'output1.php',
+                    url: $scope.url + 'api/output1.php',
                     //url: 'http://127.0.0.1:7173/pro/access_db.php',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     data: re

@@ -4,7 +4,7 @@
     app.controller('studentController', ['$scope', '$http', 'appService', 'PATHS', 'authenticationService', function ($scope, $http, appService, paths) {
             $scope.editPersonActive = false;
             $scope.data;
-            $scope.url = paths.api;
+            $scope.url = paths.url;
             $scope.default_include = $scope.url + 'dashboard.php';
             $scope.person = {};
             $scope.app_page;
@@ -31,7 +31,7 @@
             /**/
 
             $scope.getData = function () {
-                $http.post($scope.url + 'output1.php',
+                $http.post($scope.url + 'api/output1.php',
                         {'request': 'all', 'table': 'students'}
                 ).then(function successCallback(response) {
                     $scope.data = response.data.data;
@@ -48,7 +48,7 @@
             $scope.insertFormData = function (form_data) {
                 $http({
                     method: 'post',
-                    url: $scope.url + 'output1.php',
+                    url: $scope.url + 'api/output1.php',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     data: form_data
                 }).then(function successCallback(response) {
@@ -62,7 +62,7 @@
                     method: 'post',
 //                    url: 'http://127.0.0.1:7173/login/update/',
 //                    url: 'http://127.0.0.1:7173/update/login/',
-                    url: paths.api+'put/students/'+$scope.person.studentId,
+                    url: paths.url+'put/students/'+$scope.person.studentId,
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     data: {request: 'update', data: $scope.person, table: 'students'}
                 }).then(function successCallback(response) {

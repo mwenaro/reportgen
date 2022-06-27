@@ -9,7 +9,8 @@ app.constant('url',myurl);
 app.constant('PATHS', {
 	api: myurl+'api/',
         app:myurl+'app/',
-        url: myurl
+        url: myurl,
+        dataapi: myurl+'dataapi/'
     });
 // </ *********************** PATHS   ********************* >
 

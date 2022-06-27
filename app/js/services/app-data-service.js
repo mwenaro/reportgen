@@ -190,7 +190,7 @@
                     },
                     getRow: function (id) {
 //                        return  $http.post(api + 'output1.php', {request: 'get_row', table: 'exams', data: {examId: id, isDeleted: 0}});
-                        return  $http.get(paths.url + 'api/exams/'+id);
+                        return  $http.get(paths.url + 'dataapi/exams/'+id);
                     },
                     remove: function (id) {
                         return  $http.post(api + 'output1.php', {request: 'delete', table: 'exams', data: {id: id, isDeleted: 0}});

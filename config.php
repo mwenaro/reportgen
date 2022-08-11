@@ -3,7 +3,7 @@ $server = $_SERVER['SERVER_NAME'];
 $port = $_SERVER['SERVER_PORT'];
 $protocol = (isset($_SERVER['HTTPS'])&& $_SERVER['HTTPS']=== 'on')? 'https://':'http://';
 echo '<pre>';
-var_dump($_SERVER['REMEOTE_ADDR']);
+var_dump($_SERVER['REMOTE_ADDR']);
 exit();
 if(!defined('SP')){
 

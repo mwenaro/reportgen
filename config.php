@@ -1,10 +1,9 @@
 <?php
+$local_host = array('127.0.0.1', "::1");
 $server = $_SERVER['SERVER_NAME'];
 $port = $_SERVER['SERVER_PORT'];
 $protocol = (isset($_SERVER['HTTPS'])&& $_SERVER['HTTPS']=== 'on')? 'https://':'http://';
-echo '<pre>';
-var_dump($_SERVER['REMOTE_ADDR']);
-exit();
+
 if(!defined('SP')){
 
 define('SP', DIRECTORY_SEPARATOR); 
@@ -14,7 +13,7 @@ define('SP', DIRECTORY_SEPARATOR);
 
 // Always provide a TRAILING SLASH (/) AFTER A PATH
 if (!defined('URL')) {
-    $url = $port == 443? realpath(dirname(__FILE__)).'/': $protocol.''.$server.':'.$port.SP;
+    $url = in_array($server, $local_host)?  $protocol.''.$server.':'.$port.SP: realpath(dirname(__FILE__)).'/';
   define('URL', $url);
 //	define('URL', realpath(dirname(__FILE__)).SP);
 

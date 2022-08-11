@@ -21,8 +21,8 @@ if (!defined('URL')) {
 //Resouce URI
 
 if (!defined('URI')) {
-    $uri = ($port == 443 ||  $_SERVER['HTTPS']== 'on')? $protocol.''.$server.'/' : $protocol.''.$server.':'.$port.SP;
-    $url = $server != '127.0.0.1'? "$protocol$server/": "$protocol$server:$port/";
+    $uri = in_array($server, $local_host)? "$protocol$server:$port".SP:"$protocol$server/";
+    $url =in_array($server, $local_host)?  "$protocol$server:$port/" : "$protocol$server/";
   define('URI', $url);
 //	define('URL', realpath(dirname(__FILE__)).SP);
 

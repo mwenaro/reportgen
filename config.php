@@ -2,7 +2,9 @@
 $server = $_SERVER['SERVER_NAME'];
 $port = $_SERVER['SERVER_PORT'];
 $protocol = (isset($_SERVER['HTTPS'])&& $_SERVER['HTTPS']=== 'on')? 'https://':'http://';
-
+echo '<pre>';
+var_dump($_SERVER['REMEOTE_ADDR']);
+exit();
 if(!defined('SP')){
 
 define('SP', DIRECTORY_SEPARATOR); 

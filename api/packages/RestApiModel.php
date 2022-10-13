@@ -42,21 +42,24 @@ class RestApiModel {
         $order = !is_null($order) ? strtoupper(" $order") : null;
         $limit = !is_null($limit) ? " LIMIT {$limit}" : null;
         $sql = "SELECT * FROM {$table} {$where}  {$by} {$order} {$limit}";
-//        echo ''. json_encode(['sql'=>$sql,'limit'=>$rwa]);
         return $this->db->select($sql);
     }
 
     function selectOne($table, $where = []) {
-//        $tbl = strtolower(substr($table,-2))==='es'?rtrim($table, 'es'):rtrim($table, 's');
-//        $tbl = strtolower(substr($table,-2))==='es'?rtrim($table, 'es'):rtrim($table, 's');
         $tbl = rtrim($table, 's');
-        return $this->db->row($table, [strtolower($table) === 'classes' ? 'classId' : "{$tbl}Id" => $where['id']]);
+        return $this->db->row(
+            $table,
+             [
+                strtolower($table) === 'classes' ?
+                 'classId'
+                 : 
+                 "{$tbl}Id" => $where['id']
+                ]
+            );
     }
 
     function update($table, $data, $where) {
-
-        $handle = $this->db->update($table, $data, $where);
-        _Request::response($handle);
+      return $this->db->update($table, $data, $where);
     }
 
     function delete($table, $where) {

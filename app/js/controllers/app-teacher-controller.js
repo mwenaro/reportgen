@@ -57,7 +57,7 @@
              */
             $scope.getData = function () {
 
-                $http.get(paths.dataapi+'teachers/isPresent/1/?order=ASC&by=staff_code',
+                $http.get(paths.api+'teachers/isPresent/1/?order=ASC&by=staff_code',
 //                $http.post($scope.url + 'output1
 //                
 //                .php',
@@ -107,7 +107,7 @@
                 $http({
                     method: 'put',
 //                    url: $scope.url + 'output1.php',
-                    url: paths.api + 'put/dataapi/teachers/teacherId/'+teacher.teacherId,
+                    url: paths.api + 'put/teachers/teacherId/'+teacher.teacherId,
 //                    url: paths.url + 'api/put/teachers/teacherId/'+teacher.teacherId,
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     data: {'data': teacher, 'request': 'update', 'table': 'teachers'}
@@ -115,12 +115,11 @@
                     // Store response data
 
                     console.log('update tr update', response.data);
-return;
                     if (response.data.flag) {
                         $scope.person = {};
                         $scope.editPersonActive = false;
                         $scope.showForm = false;
-                        // $scope.getData();
+                        $scope.getData();
                         // $scope.data = response.data.data;
 //                        alert(response.data.msg);
                     } else {
@@ -403,7 +402,7 @@ return;
                     lessons: wk.lessons
                 };
 //                console.log('post workload', workloadpost);
-                $http.post(paths.url+'dataapi/workloads',
+                $http.post(paths.url+'workloads',
                         {data:workloadpost }
                 // request
                 ).then(function successCallback(response) {

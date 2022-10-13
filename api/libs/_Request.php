@@ -46,9 +46,6 @@ class _Request {
         $post = file_get_contents("php://input");
 
         self::$hii = $post;
-//        $p = is_object(json_decode($post)) ? json_decode($post, true) : json_decode($post);
-        //self::$post = $p;
-//        return self::$post;
         self::$post = is_object(json_decode($post)) ? json_decode($post, true) : json_decode($post);
         return !empty(self::$post) ? self::$post : [];
     }

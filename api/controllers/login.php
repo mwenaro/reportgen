@@ -41,8 +41,8 @@ class Login extends Controller {
     }
 
     function getLogin() {
-        $post = _Request::post();
-        $user = $post['user'];
+        $user = _Request::post();
+      
 // $user = ['username' => 'user', 'password' => 'user'];     
         $sql = '';
         $id_name = '';
@@ -73,7 +73,7 @@ class Login extends Controller {
         }
     }
 
-    function fetch($userId = null) {
+    function getone($userId = null) {
         $post = _Request::post();
 //        $data = $this->db->getRow('teachers', array('teacherId' => $post['userId']));
         $data = $this->db->getRow($post['table'], $post['data']);
@@ -139,7 +139,7 @@ class Login extends Controller {
         echo json_encode(['flag' => empty($return), 'return' => $return]);
     }
 
-    function add() {
+    function create() {
 // $post = _Request::post();
         $post = _Request::init();
         $data = $post['data'];

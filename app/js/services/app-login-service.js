@@ -19,7 +19,7 @@
 //            *********************************
                     return{
                         loginUser: function (user) {
-                            var validate = h.post(paths.url+'getLogin/' + 'login', {request: 'login', user: user});
+                            var validate = h.post(paths.url+'getLogin/' + 'login', user);
                             
                             validate.then(function (response) {
                                  console.log(response);

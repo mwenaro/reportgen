@@ -42,10 +42,10 @@
                     login.error.pwd.Mismatch = false;
 //                logon.error.pwd=false
 
-                    _data.subjects.get().then(function (repsonse) {
-                        login.subs = repsonse.data.data.q1;
-//                console.log(mk.subjects);
-                    });
+//                     _data.subjects.get().then(function (repsonse) {
+//                        login.subs = repsonse.data.data.q1;
+// //                console.log(mk.subjects);
+//                     });
                     login.addPerson = function (data) {
                         if (login.error.pwd.Length || login.error.pwd.Mismatch || login.error.phone || login.error.staff || login.error.phoneInvalid) {
                             alert('Error! Check your Information and try Again!');
@@ -69,6 +69,7 @@
                             });
                         }
                     };
+                    
                     login.pwdCheck = function (p1, p2) {
                         login.error.pwd = {};
                         if (p1.length < 6) {

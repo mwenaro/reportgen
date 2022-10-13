@@ -29,11 +29,7 @@ class Database extends PDO {
 //                echo $exc->toString();
             }
 
-//parent::__construct($DB_TYPE . ':dbname=' . $DB_NAME);
-//var_dump($DB_NAME);
-//             parent::__construct($DB_TYPE . ':' . $DB_NAME); 
-//            parent::__construct($DB_TYPE . ":" . $url);
-// $this->path = $DB_NAME;
+
 
         endif;
 
@@ -167,8 +163,7 @@ class Database extends PDO {
 //                }
             endif;
         } catch (PDOException $exc) {
-            $exc->getMessage();
-            $this->errors[] = $exc->getMessage();
+           $this->errors['msg'] = $exc->getMessage();
             $this->errors['sql'] = $sql;
         }
         return $this;
@@ -245,9 +240,9 @@ class Database extends PDO {
             }
             $this->flag = $sth->execute();
 
-//$this->flag =
+
         } catch (Exception $exc) {
-            $this->errors[] = $exc->getMessage();
+            $this->errors['msg'] = $exc->getMessage();
             $this->errors['sql'] = $sql;
             $this->errors['flag'] = $this->flag;
         }
@@ -280,7 +275,7 @@ class Database extends PDO {
 
             $this->flag = $sth->execute();
         } catch (PDOException $exc) {
-            $this->errors[] = $exc->getMessage();
+            $this->errors['msg'] = $exc->getMessage();
             $this->errors['sql'] = $sql;
         }
         return $this;
@@ -302,7 +297,7 @@ class Database extends PDO {
         try {
             $this->flag = $this->exec($sql);
         } catch (Exception $exc) {
-            $this->errors[] = $exc->getMessage();
+            $this->errors['msg'] = $exc->getMessage();
         }
         return $this;
     }
@@ -311,7 +306,7 @@ class Database extends PDO {
         try {
             $this->flag = ($this->exec($sql) === true ? true : false);
         } catch (PDOException $exc) {
-            $this->errors[] = $exc->getMessage();
+            $this->errors['msg'] = $exc->getMessage();
         }
 
         return $this;
@@ -321,7 +316,7 @@ class Database extends PDO {
         try {
             $this->flag = ($this->exec($sql) === true ? true : false);
         } catch (PDOException $exc) {
-            $this->errors[] = $exc->getMessage();
+            $this->errors['msg'] = $exc->getMessage();
         }
 
         return $this;
@@ -370,8 +365,8 @@ class Database extends PDO {
             $this->flag = $sth->execute();
             $this->data = $this->flag ? $sth->fetch($fetchMode) : [];
         } catch (Exception $exc) {
-            $this->errors[] = $exc->getMessage();
-            $this->errors[] = $sql;
+            $this->errors['msg'] = $exc->getMessage();
+            $this->errors['sql'] = $sql;
         }
 
         return $this;
@@ -396,7 +391,7 @@ class Database extends PDO {
 
     function exists($table, $where = array()) {
         $d = $this->getRow($table, $where);
-        return !empty($d) || $d !== [] || count($d) > 0 ? true : false;
+        return (!empty($d) && count($d) > 0) ? true : false;
     }
 
 }

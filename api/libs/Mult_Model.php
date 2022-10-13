@@ -22,13 +22,11 @@ class Mult_Model {
     }
 
     function insert($table, $data, $show = true) {
-        //var_dump($expression);
         $return = [];
         $return ['error'] = '';
         $return ['msg'] = $this->_tbl($table) . ' Successfully Added';
         $handle = $this->db->insert($table, $data, []);
-        //$this->db = null;
-//        $handle = $this->db->insert($table, $data, $where);
+
         if (!$handle->getFlag()) {
             $return ['error'] = $handle->getError();
             $return ['msg'] = 'An error has Occured. Please try Again';
@@ -43,13 +41,16 @@ class Mult_Model {
 
     function insertMany($table, $data, $show = true) {
         $return = [];
-        foreach ($data as $ks => $value) {
-            print_r(json_encode($value));
-//            exit();
-//            $return[] = $this->insert($table, $value,false);
-        }
+        foreach ($data as $row) {
+            print_r(json_encode($row));
 
-//        print_r(json_encode($return));
+           $return[] = $this->insert($table, $value,false)->getError();
+        }
+if($show){
+    print_r(json_encode($return));
+}
+       
+       return $return;
     }
 
     function update($table, $data, $where, $cmd = null, $show = false) {

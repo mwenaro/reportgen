@@ -43,7 +43,7 @@ $js_libs = [
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>lovely site</title>
+        <title>MDS Reportgen</title>
         <!--Core Js libs-->
         <script src="<?php echo URI; ?>public/js/angular/angular.min.js" type="text/javascript"></script>
         <script src="<?php echo URI; ?>public/js/angular/angular-route.min.js" type="text/javascript"></script>

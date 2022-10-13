@@ -26,8 +26,8 @@ class RestApiProcessor {
     private $db_table = null;
     private $q_builder = null;
 //    private $db_table = "users";
-    public $controller_name = null;
-    private $controller_method = null;
+    public $controller_name = 'index';
+    private $controller_method = 'index';
     private $where = array();
     private $order = null;
     private $by = null;
@@ -63,7 +63,7 @@ class RestApiProcessor {
         Session::init();
 
         $this->db = new Database('sqlite', DB_NAME);
-        $req_string = is_null($request_string) ? $this->_getReqString() : $request_string;
+        $req_string = is_null($request_string) ? $_SERVER['REQUEST_URI'] : $request_string;
 //        var_dump($req_string);
 //        exit();
         $this->init($req_string);
@@ -78,7 +78,7 @@ class RestApiProcessor {
     private function _getUrlFromRequest() {
         $path = (isset($_SERVER["PATH_INFO"]) ? trim($_SERVER["PATH_INFO"]) : null);
         $q_string = (isset($_SERVER["QUERY_STRING"]) ? trim($_SERVER["QUERY_STRING"]) : null);
-        $q_uri = (isset($_SERVER["QUERY_URI"]) ? trim($_SERVER["QUERY_URI"]) : null);
+        $q_uri = (isset($_SERVER["REQUEST_URI"]) ? trim($_SERVER["REQUEST_URI"]) : null);
         $path .= is_null($q_string) ? null : "/?" . $q_string;
 
         return !is_null($q_uri) ? $q_uri : (!is_null($path) ? $path : null);
@@ -133,9 +133,13 @@ class RestApiProcessor {
     function rest_init(RestApi $rapi) {
 //        exit();
         if ($this->is_restapi) {
-//            echo json_encode(['inside API BRACKET']);
+        //    echo json_encode(['inside API BRACKET']);
 //            exit();
             # code..
+            if(!$this->db_table):
+                return;
+            endif;
+
             switch ($this->request_method) {
 //                case!is_null($this->db_table) && $this->request_method === 'get' || $this->request_method === 'fetch':
                 case $this->request_method === 'get' || $this->request_method === 'fetch':
@@ -160,7 +164,6 @@ class RestApiProcessor {
                     break;
                 case $this->request_method === 'delete' || $this->request_method === 'del':
                     # code...
-                    _Request::setCorsHearders();
                     echo json_encode([
                         'met' => 'delete method',
                         $this->db_table,
@@ -181,9 +184,6 @@ class RestApiProcessor {
             $table = $this->req_data['table'];
             $coloumns = $this->req_data['columns'];
             $join = $this->req_data['join'];
-//            $where = $this->where();
-//            $this->req_ops['where'] = $where;
-//            $this->req_ops['join'] = $join;
             $this->parameters['join'] = $join;
 
             echo json_encode([
@@ -204,9 +204,19 @@ class RestApiProcessor {
             ]);
 //            return $handle->getData();
         } else {
+// if($this->controller_name !== 'index') :
+//     echo json_encode([
+//                     'req m '=> $this->request_method,
+//                     'con m' =>$this->controller_method,
+//                     'con ' =>$this->controller_name,
+//                     'tbl' =>$this->db_table
+        
+//                 ]);
+//                 exit();
 
-//            $this->_load();
-           
+   
+// endif;
+         
             $this->_load_controller();
             $this->_load_controller_method();
           
@@ -219,12 +229,19 @@ class RestApiProcessor {
         $file1 = $this->_controllerPath . $this->controller_method . '.php';
 
         if (file_exists($file)) {
+            echo " <p> Controller {$this->controller_name} exists </p>";
             require_once $file;
             $this->_controller = new $this->controller_name;
             if (method_exists($this->_controller, $this->controller_method)):
+                echo " <p> And method {$this->controller_method} exists </p>";
                 $this->_controller->{$this->controller_method}();
+            elseif (method_exists($this->_controller, $this->request_method)):
+                    $this->_controller->{$this->request_method}();
+                    echo " <p> And method {$this->request_method} exists </p>";     
+    
             elseif (method_exists($this->_controller, 'index')):
                 $this->_controller->index();
+                exit();
             else:
 //            $this->_controller->index();
                 echo json_encode($this->error_code_msg('bad_request'));
@@ -235,6 +252,8 @@ class RestApiProcessor {
 
             if (method_exists($this->_controller, $this->controller_name)):
                 $this->_controller->{$this->controller_name}();
+            elseif (method_exists($this->_controller, $this->request_method)):
+                    $this->_controller->{$this->request_method}();
             elseif (method_exists($this->_controller, 'index')):
                 $this->_controller->index();
             else:
@@ -248,7 +267,6 @@ class RestApiProcessor {
 //            echo json_encode($this->error_code_msg('bad_request'));
         }
 
-//        _Request::response($handle, new Report(), $processorFun);
     }
 
     function _load_controller() {
@@ -256,12 +274,13 @@ class RestApiProcessor {
         $file1 = $this->_controllerPath . $this->controller_method . '.php';
 
         if (file_exists($file)):
+            // echo " <p> Controller {$this->controller_name} exists </p>";
             require_once $file;
             $this->_controller = new $this->controller_name;
 //        elseif (file_exists($file1)):
 //            require_once $file1;
 //            $this->_controller = new $this->controller_method;
-        else:
+else:
             $file = $this->_controllerPath . $this->_defaultFile;
             require_once $file;
             $this->_controller = new Index();
@@ -275,16 +294,19 @@ class RestApiProcessor {
     function _load_controller_method() {
 //        if (is_null(!$this->_controller)){        exit();}
         if (method_exists($this->_controller, $this->controller_method)):
+            // echo " <p> And method {$this->controller_method} exists </p>";
             $this->_controller->{$this->controller_method}();
-        elseif (method_exists($this->_controller, $this->controller_name)):
-            $this->_controller->{$this->controller_name}();
+         elseif (method_exists($this->_controller, $this->request_method)):
+            $this->_controller->{$this->request_method}();
+            // echo " <p> And method {$this->request_method} exists </p>";
         elseif (method_exists($this->_controller, 'index') && $this->controller_name === 'Index'):
             $this->_controller->index();
         else:
 //            $this->_controller->index();
             echo json_encode($this->error_code_msg('bad_request'));
-//            echo json_encode(['con'=> $this->_controller]);
+           
         endif;
+        
     }
 
     function _con_has_method($ob, $method) {
@@ -305,70 +327,65 @@ class RestApiProcessor {
 
         return $return;
     }
-
+function log($val){
+    if($this->controller_name !=='index'){
+         echo json_encode($val);
+         exit();
+        } else{
+        echo json_encode($val);
+        }
+    
+}
     function init($req_str = '') {
-        $req_string = empty($req_str) ? '/index/' : $req_str;
+
+        $req_string = $req_str;
+
+        $custom_method_keywords = ['get','put','set','del','cre','upd'  ];
+
+       
         // echo urldecode($req_string);
         // var_dump();
         // exit();
-//        $req_string = "users/2/";
-//        $req_string1 = "users/name/mwero/age/30/";
-//        $req_string2 = "users/name/mwero/age/30/?by=date&by=desc&limit=50&dm=getusers";
+//        $req_string = "/api/users/2/";
+//        $req_string1 = "/api/users/name/mwero/age/30/";
+//        $req_string2 = "/api/users/name/mwero/age/30?by=date&by=desc&limit=50&dm=getusers";
 //        var_dump($req_string);
         /**
          * Cutting the request string $req_string into url & options
          */
-        $req_string_array = explode("/?", trim($req_string, '/'));
+        $req_string_array = explode("?", trim($req_string, '/'));
         $url = array_shift($req_string_array);
-
-        $url_array = explode("/", trim($url, "/"));
-//        $url_options = !empty($req_string_array) ? array_shift($req_string_array) : null;
-        $met = !empty($url_array) ? $url_array[0] : null;
-        $con_method = null;
-        if ($this->isMethod($met)):
-            switch ($met) {
-                case $this->is_req_method_key($met) === true:
-                    $con_method = $this->req_methods[strtolower($met)];
-
-                    break;
-                case $this->is_req_method($met) !== true && $this->is_controller_method($met) === true:
-                    $con_method = $met;
-
-                    break;
-
-                default:
-                    $con_method = $met;
-                    break;
-            }
-            array_shift($url_array);
-        endif;
-
-
-        $this->controller_method = !in_array(strtolower($met), ['put', 'del', 'delete']) ? strtolower($con_method) : null;
-        $this->request_method = in_array(strtolower($met), ['put', 'del', 'delete']) ? $con_method : strtolower($_SERVER["REQUEST_METHOD"]);
-
-        $url = implode('/', $url_array);
-
-        /**
-         * check if is rest api
-         */
-        $this->is_restapi = strpos(strtolower($url), 'dataapi') !== false ? true : false;
-        $url = $this->is_restapi ? substr($url, 3) : $url;
-
-        /**
+// $this->log($req_str);
+          /**
          * get endpoints
          */
         $this->get_endpoints = strpos(strtolower($url), 'ends') !== false ? true : false;
         $url = $this->get_endpoints ? trim(substr($url, 5), '/') : $url;
 
+  /**
+         * check if is rest api
+         */
+        $this->is_restapi = strpos($url, 'api') !== false? true : false;
+        $url = $this->is_restapi ? substr($url, 3) : $url;
 
         $url_array = explode("/", trim($url, "/"));
-//        $pi = in_array('api', $url_array) ? array_shift($url_array) : '';
-        /*
-         * Check if there is a request method in the url and thre is, obtain it
+        /***
+         * check for custome methods e.g getusers,setuser, delpeople
          */
+       
+        foreach($custom_method_keywords as $keyword){
+            if(strpos(strtolower($url), $keyword) !== false){
+                $this->controller_method = array_shift($url_array);
+              
+            }
+        }
+       
 
 
+        // $this->controller_method = !in_array(strtolower($met), ['put', 'del', 'delete']) ? strtolower($con_method) : null;
+        $this->request_method = in_array($this->controller_method, ['put', 'del', 'delete']) ? $this->request_method: strtolower($_SERVER["REQUEST_METHOD"]);
+
+    
         /**
          * Extract the db_table/controller from the url_array
          */
@@ -385,13 +402,7 @@ class RestApiProcessor {
          */
         $method = $this->_extract_modifiers($req_string, 'dm');
 //        $this->controller_method = $method ? $method : $this->request_method;
-//        echo '' . json_encode(
-//                [
-//                    'cntrl' => $this->controller_name,
-//                    'str_met' => $this->controller_method,
-//                    'req_met' => $this->request_method
-//                ]
-//        );
+     
 
         /**
          * Set by,by,limit
@@ -399,6 +410,18 @@ class RestApiProcessor {
         $this->set_by($this->_extract_modifiers($req_string, 'by'));
         $this->set_order($this->_extract_modifiers($req_string, 'order'));
         $this->set_limit($this->_extract_modifiers($req_string, 'limit'));
+if($this->controller_name !== 'index'&& $this->request_method === 'put'):
+        echo json_encode([
+            'req m '=> $this->request_method,
+            'con m' =>$this->controller_method,
+            'con ' =>$this->controller_name,
+            'tbl' =>$this->db_table
+
+        ]);
+        exit();
+    endif;
+   
+
     }
 
     function set_order($order) {
@@ -420,11 +443,12 @@ class RestApiProcessor {
     }
 
     function set_db_table($db_table) {
-        if (!$db_table):
-            $db_table = $this->db_table;
+        if (!$db_table || $db_table !== 'index'):
+            $this->db_table = $db_table;
+            $this->controller_name =  rtrim($db_table, "s");
         endif;
-        $this->db_table = $db_table;
-        $this->controller_name = rtrim($db_table, "s");
+            
+       
     }
 
     private function _where_extractor($raw_where) {
@@ -515,6 +539,7 @@ class RestApiProcessor {
                 $modifier_value_pair_arr[$box[0]] = $box[1];
                 $this->parameters[$box[0]] = $box[1];
             }
+
             /**
              * get the requested modifier
              */

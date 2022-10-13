@@ -51,13 +51,13 @@
                         trs = _trs;
                     },
                     add: function (tr) {
-                        return $http.post(paths.url + 'login/add', {request: 'insert', table: 'teachers', data: tr});
+                        return $http.post(paths.url + 'create/login', {request: 'insert', table: 'teachers', data: tr});
                     },
                     get: function () {
                         return $http.post(api + 'output1.php', {request: 'all', table: 'teachers'});
                     },
                     getRow: function (id) {
-                        return  $http.post(paths.url + 'login/fetch', {request: 'get_row', table: 'teachers', data: {teacherId: id, isDeleted: 0}});
+                        return  $http.post(paths.url + 'getone/login', {request: 'get_row', table: 'teachers', data: {teacherId: id, isDeleted: 0}});
                     },
                     getRow1: function (id) {
                         return  $http.post(api + 'output1.php', {request: 'get_row', table: 'teachers', data: {teacherId: id, isDeleted: 0}});

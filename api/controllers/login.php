@@ -41,11 +41,13 @@ class Login extends Controller {
     }
 
     function getLogin() {
-        $user = _Request::post();
-      
-// $user = ['username' => 'user', 'password' => 'user'];     
+        $user = _Request::post(); 
         $sql = '';
         $id_name = '';
+if(!isset($user['username']) || !isset($user['password'])){
+    http_response_code(404);
+    die(json_encode(['flag' => false, 'usersata' => $user]));
+}
         switch ($user) {
             case trim($user['username']) === 'admin' || trim($user['username']) === 'user':
 // $sql = "SELECT userId,username,role FROM users WHERE role = :username AND password = :password LIMIT 1";

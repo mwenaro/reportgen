@@ -18,7 +18,7 @@
                 <!--<form action="http://localhost/pro/graph_new.php" method="post" target="_BLANK" data-ng-if="repo.allowPrinting">-->
                 <div class="w3-row">
                     <div class="w3-col-md-4">
-                        <form action="http://127.0.0.1:7173/api/report/graph_new.php" method="post" target="_BLANK" data-ng-if="repo.allowPrinting">
+                        <form action="{{repo.url}}/api/report/graph_new.php" method="post" target="_BLANK" data-ng-if="repo.allowPrinting">
                     <!--<input type="hidden" name="data" value="{{repo.data}}">-->
                             <input type="hidden" name="data" value="{{repo.data}}">
                             <p> <button class="w3-btn w3-btn-block btn-primary">Print Reports</button></p>
@@ -26,7 +26,7 @@
                     </div>
 
                     <div class="w3-col-md-4">
-                        <form action="http://127.0.0.1:7173/api/report/marklist/graph_new.php" method="post" target="_BLANK" data-ng-if="repo.allowPrinting">
+                        <form action="{{repo.url}}/api/report/marklist/graph_new.php" method="post" target="_BLANK" data-ng-if="repo.allowPrinting">
                     <!--<input type="hidden" name="data" value="{{repo.data}}">-->
                             <input type="hidden" name="data" value="{{repo.data}}">
                             <p> <button class="w3-btn w3-btn-block btn-primary">Print Marklists</button></p>
@@ -34,7 +34,7 @@
                     </div>
 
                     <div class="w3-col-md-4">
-                        <form action="http://127.0.0.1:7173/api/report/meritlist/graph_new.php" method="post" target="_BLANK" data-ng-if="repo.allowPrinting">
+                        <form action="{{repo.url}}/api/report/meritlist/graph_new.php" method="post" target="_BLANK" data-ng-if="repo.allowPrinting">
                     <!--<input type="hidden" name="data" value="{{repo.data}}">-->
                             <input type="hidden" name="data" value="{{repo.data}}">
                             <p> <button class="w3-btn w3-btn-block btn-primary">Print Merit Lists</button></p>

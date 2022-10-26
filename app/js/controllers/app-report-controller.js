@@ -22,6 +22,7 @@
             repo.allowPrinting = false;
             repo.filledMarks = [];
             repo.data = [];
+            repo.url = paths.url;
             repo.current_exam = null;
 //            repo.reports.cards=[];
 //            repo.reports.marklists=[];

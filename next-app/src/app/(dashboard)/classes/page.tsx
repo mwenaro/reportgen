@@ -11,18 +11,14 @@ import {
   Input,
   DataTable,
   LoadingSpinner,
-  Badge,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
+  Badge
 } from '@/components'
-import { TeacherFiltersPanel } from '@/components/teachers/teacher-filters'
-import { useTeachers, useDeleteTeacher } from '@/lib/store/teachers'
+import { ClassFiltersPanel } from '@/components/classes/class-filters'
+import { useClasses, useDeleteClass } from '@/lib/store/classes'
+import { useTeachers } from '@/lib/store/teachers'
 import { useSubjects } from '@/lib/store/subjects'
-import { Teacher, TeacherFilters } from '@/lib/types'
-import { exportToCSV, formatDate, formatPhoneNumber } from '@/lib/utils'
+import { Class, ClassFilters } from '@/lib/types'
+import { exportToCSV, formatDate } from '@/lib/utils'
 import { ColumnDef } from '@tanstack/react-table'
 import { 
   Plus, 
@@ -30,58 +26,55 @@ import {
   Filter, 
   Download, 
   Upload,
-  MoreHorizontal,
   Edit,
   Eye,
   Trash2,
   Users,
   BookOpen,
-  Calendar,
-  Award
+  GraduationCap,
+  Calendar
 } from 'lucide-react'
 
-export default function TeachersPage() {
+export default function ClassesPage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = React.useState('')
-  const [filters, setFilters] = React.useState<TeacherFilters>({})
+  const [filters, setFilters] = React.useState<ClassFilters>({})
   const [showFilters, setShowFilters] = React.useState(false)
-  const [selectedTeachers, setSelectedTeachers] = React.useState<string[]>([])
+  const [selectedClasses, setSelectedClasses] = React.useState<string[]>([])
 
-  const { data: teachers = [], isLoading, error } = useTeachers(filters)
+  const { data: classes = [], isLoading, error } = useClasses(filters)
+  const { data: teachers = [] } = useTeachers()
   const { data: subjects = [] } = useSubjects()
-  const deleteTeacher = useDeleteTeacher()
+  const deleteClass = useDeleteClass()
 
-  // Filter teachers based on search term
-  const filteredTeachers = React.useMemo(() => {
-    if (!searchTerm) return teachers
-    return teachers.filter(teacher => 
-      teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.subjects?.some(subjectId => 
-        subjects.find(s => s.id === subjectId)?.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+  // Filter classes based on search term
+  const filteredClasses = React.useMemo(() => {
+    if (!searchTerm) return classes
+    return classes.filter(classItem => 
+      classItem.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      classItem.level.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      classItem.section.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      classItem.classTeacherName?.toLowerCase().includes(searchTerm.toLowerCase())
     )
-  }, [teachers, searchTerm, subjects])
+  }, [classes, searchTerm])
 
   // Calculate statistics
   const stats = React.useMemo(() => {
-    const activeTeachers = teachers.filter(t => t.status === 'active')
-    const totalSubjects = [...new Set(teachers.flatMap(t => t.subjects || []))].length
-    const avgClasses = teachers.length > 0 
-      ? teachers.reduce((sum, t) => sum + (t.classes?.length || 0), 0) / teachers.length 
-      : 0
+    const activeClasses = classes.filter(c => c.isActive)
+    const totalStudents = classes.reduce((sum, c) => sum + c.currentEnrollment, 0)
+    const totalCapacity = classes.reduce((sum, c) => sum + c.capacity, 0)
+    const avgUtilization = totalCapacity > 0 ? (totalStudents / totalCapacity) * 100 : 0
 
     return {
-      total: teachers.length,
-      active: activeTeachers.length,
-      subjects: totalSubjects,
-      avgClasses: Math.round(avgClasses * 10) / 10
+      total: classes.length,
+      active: activeClasses.length,
+      totalStudents,
+      avgUtilization: Math.round(avgUtilization * 10) / 10
     }
-  }, [teachers])
+  }, [classes])
 
   // Define table columns
-  const columns: ColumnDef<Teacher>[] = [
+  const columns: ColumnDef<Class>[] = [
     {
       id: 'select',
       header: ({ table }) => (
@@ -91,9 +84,9 @@ export default function TeachersPage() {
           onChange={(e) => {
             table.toggleAllPageRowsSelected()
             if (e.target.checked) {
-              setSelectedTeachers(table.getRowModel().rows.map(row => row.original.id))
+              setSelectedClasses(table.getRowModel().rows.map(row => row.original.id))
             } else {
-              setSelectedTeachers([])
+              setSelectedClasses([])
             }
           }}
           className="rounded border-gray-300"
@@ -105,11 +98,11 @@ export default function TeachersPage() {
           checked={row.getIsSelected()}
           onChange={(e) => {
             row.toggleSelected()
-            const teacherId = row.original.id
-            setSelectedTeachers(prev => 
+            const classId = row.original.id
+            setSelectedClasses(prev => 
               e.target.checked 
-                ? [...prev, teacherId]
-                : prev.filter(id => id !== teacherId)
+                ? [...prev, classId]
+                : prev.filter(id => id !== classId)
             )
           }}
           className="rounded border-gray-300"
@@ -119,38 +112,55 @@ export default function TeachersPage() {
       enableHiding: false,
     },
     {
-      accessorKey: 'employeeId',
-      header: 'Employee ID',
-      cell: ({ row }) => (
-        <span className="font-mono text-sm">{row.getValue('employeeId')}</span>
-      ),
+      accessorKey: 'name',
+      header: 'Class Name',
+      cell: ({ row }) => {
+        const classItem = row.original
+        return (
+          <div>
+            <div className="font-medium">{classItem.name}</div>
+            <div className="text-sm text-gray-500">
+              {classItem.level} - {classItem.section}
+            </div>
+          </div>
+        )
+      },
     },
     {
-      accessorKey: 'name',
-      header: 'Name',
+      accessorKey: 'classTeacherName',
+      header: 'Class Teacher',
       cell: ({ row }) => {
-        const teacher = row.original
+        const teacherName = row.original.classTeacherName
+        return teacherName ? (
+          <div className="font-medium">{teacherName}</div>
+        ) : (
+          <span className="text-gray-400">Not assigned</span>
+        )
+      },
+    },
+    {
+      accessorKey: 'currentEnrollment',
+      header: 'Enrollment',
+      cell: ({ row }) => {
+        const classItem = row.original
+        const utilizationPercent = (classItem.currentEnrollment / classItem.capacity) * 100
+        const isOverCapacity = classItem.currentEnrollment > classItem.capacity
+        
         return (
-          <div className="flex items-center space-x-3">
-            <div className="shrink-0 h-8 w-8">
-              {teacher.profileImage ? (
-                <img 
-                  className="h-8 w-8 rounded-full object-cover" 
-                  src={teacher.profileImage} 
-                  alt={teacher.name}
-                />
-              ) : (
-                <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    {teacher.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                  </span>
-                </div>
-              )}
-            </div>
+          <div className="flex items-center space-x-2">
             <div>
-              <div className="font-medium">{teacher.name}</div>
-              <div className="text-sm text-gray-500">{teacher.email}</div>
+              <span className={isOverCapacity ? 'text-red-600 font-medium' : ''}>
+                {classItem.currentEnrollment} / {classItem.capacity}
+              </span>
+              <div className="text-xs text-gray-500">
+                {utilizationPercent.toFixed(0)}% capacity
+              </div>
             </div>
+            {isOverCapacity && (
+              <Badge variant="destructive" className="text-xs">
+                Over capacity
+              </Badge>
+            )}
           </div>
         )
       },
@@ -159,84 +169,57 @@ export default function TeachersPage() {
       accessorKey: 'subjects',
       header: 'Subjects',
       cell: ({ row }) => {
-        const teacherSubjects = row.original.subjects || []
-        const subjectNames = teacherSubjects
-          .map(subjectId => subjects.find(s => s.id === subjectId)?.name)
-          .filter(Boolean)
-        
-        return (
-          <div className="flex flex-wrap gap-1">
-            {subjectNames.slice(0, 2).map((subject, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
-                {subject}
-              </Badge>
-            ))}
-            {subjectNames.length > 2 && (
-              <Badge variant="outline" className="text-xs">
-                +{subjectNames.length - 2}
-              </Badge>
-            )}
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: 'classes',
-      header: 'Classes',
-      cell: ({ row }) => {
-        const classCount = row.original.classes?.length || 0
+        const subjectCount = row.original.subjects?.length || 0
         return (
           <div className="flex items-center">
-            <Users className="h-4 w-4 mr-1 text-gray-400" />
-            <span>{classCount}</span>
+            <BookOpen className="h-4 w-4 mr-1 text-gray-400" />
+            <span>{subjectCount}</span>
           </div>
         )
       },
     },
     {
-      accessorKey: 'status',
+      accessorKey: 'academicYear',
+      header: 'Academic Year',
+      cell: ({ row }) => row.getValue('academicYear'),
+    },
+    {
+      accessorKey: 'isActive',
       header: 'Status',
       cell: ({ row }) => {
-        const status = row.getValue('status') as string
+        const isActive = row.getValue('isActive') as boolean
         return (
-          <Badge 
-            variant={status === 'active' ? 'default' : status === 'inactive' ? 'secondary' : 'outline'}
-          >
-            {status}
+          <Badge variant={isActive ? 'default' : 'secondary'}>
+            {isActive ? 'Active' : 'Inactive'}
           </Badge>
         )
       },
     },
     {
-      accessorKey: 'hireDate',
-      header: 'Hire Date',
-      cell: ({ row }) => formatDate(row.getValue('hireDate')),
-    },
-    {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => {
-        const teacher = row.original
+        const classItem = row.original
         return (
           <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push(`/teachers/${teacher.id}`)}
+              onClick={() => router.push(`/classes/${classItem.id}`)}
             >
               <Eye className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push(`/teachers/${teacher.id}/edit`)}
+              onClick={() => router.push(`/classes/${classItem.id}/edit`)}
             >
               <Edit className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleDeleteTeacher(teacher.id)}
+              onClick={() => handleDeleteClass(classItem.id)}
               className="text-red-600 hover:text-red-700"
             >
               <Trash2 className="h-4 w-4" />
@@ -247,50 +230,48 @@ export default function TeachersPage() {
     },
   ]
 
-  const handleDeleteTeacher = async (teacherId: string) => {
-    if (confirm('Are you sure you want to delete this teacher?')) {
+  const handleDeleteClass = async (classId: string) => {
+    const classItem = classes.find(c => c.id === classId)
+    if (confirm(`Are you sure you want to delete ${classItem?.name}?`)) {
       try {
-        await deleteTeacher.mutateAsync(teacherId)
+        await deleteClass.mutateAsync(classId)
       } catch (error) {
-        console.error('Failed to delete teacher:', error)
+        console.error('Failed to delete class:', error)
       }
     }
   }
 
   const handleBulkDelete = async () => {
-    if (selectedTeachers.length === 0) return
+    if (selectedClasses.length === 0) return
     
-    if (confirm(`Are you sure you want to delete ${selectedTeachers.length} teachers?`)) {
+    if (confirm(`Are you sure you want to delete ${selectedClasses.length} classes?`)) {
       try {
         await Promise.all(
-          selectedTeachers.map(id => deleteTeacher.mutateAsync(id))
+          selectedClasses.map(id => deleteClass.mutateAsync(id))
         )
-        setSelectedTeachers([])
+        setSelectedClasses([])
       } catch (error) {
-        console.error('Failed to delete teachers:', error)
+        console.error('Failed to delete classes:', error)
       }
     }
   }
 
   const handleExport = () => {
-    const exportData = filteredTeachers.map(teacher => ({
-      'Employee ID': teacher.employeeId,
-      'Name': teacher.name,
-      'Email': teacher.email || '',
-      'Phone': teacher.phone || '',
-      'Gender': teacher.gender,
-      'Date of Birth': formatDate(teacher.dateOfBirth),
-      'Hire Date': formatDate(teacher.hireDate),
-      'Status': teacher.status,
-      'Subjects': teacher.subjects?.map(subjectId => 
-        subjects.find(s => s.id === subjectId)?.name
-      ).join(', ') || '',
-      'Classes': teacher.classes?.length || 0,
-      'Qualification': teacher.qualification || '',
-      'Experience': teacher.experience || '',
+    const exportData = filteredClasses.map(classItem => ({
+      'Class Name': classItem.name,
+      'Level': classItem.level,
+      'Section': classItem.section,
+      'Class Teacher': classItem.classTeacherName || '',
+      'Current Enrollment': classItem.currentEnrollment,
+      'Capacity': classItem.capacity,
+      'Utilization %': Math.round((classItem.currentEnrollment / classItem.capacity) * 100),
+      'Subjects': classItem.subjects?.length || 0,
+      'Academic Year': classItem.academicYear,
+      'Status': classItem.isActive ? 'Active' : 'Inactive',
+      'Created At': formatDate(classItem.createdAt),
     }))
 
-    exportToCSV(exportData, `teachers-${new Date().toISOString().split('T')[0]}.csv`)
+    exportToCSV(exportData, `classes-${new Date().toISOString().split('T')[0]}.csv`)
   }
 
   if (error) {
@@ -299,7 +280,7 @@ export default function TeachersPage() {
         <Card>
           <CardContent className="py-8">
             <div className="text-center">
-              <p className="text-red-600">Error loading teachers: {error.message}</p>
+              <p className="text-red-600">Error loading classes: {error.message}</p>
               <Button onClick={() => window.location.reload()} className="mt-4">
                 Retry
               </Button>
@@ -315,22 +296,22 @@ export default function TeachersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Teachers</h1>
+          <h1 className="text-3xl font-bold">Classes</h1>
           <p className="text-muted-foreground">
-            Manage teaching staff and their assignments
+            Manage academic classes and student enrollment
           </p>
         </div>
         <div className="flex items-center space-x-2 mt-4 sm:mt-0">
           <Button 
             variant="outline" 
-            onClick={() => router.push('/teachers/import')}
+            onClick={() => router.push('/classes/import')}
           >
             <Upload className="h-4 w-4 mr-2" />
             Import
           </Button>
-          <Button onClick={() => router.push('/teachers/new')}>
+          <Button onClick={() => router.push('/classes/new')}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Teacher
+            Add Class
           </Button>
         </div>
       </div>
@@ -341,11 +322,11 @@ export default function TeachersPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Teachers</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Classes</p>
                 <p className="text-3xl font-bold">{stats.total}</p>
               </div>
               <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <GraduationCap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
@@ -355,11 +336,11 @@ export default function TeachersPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Teachers</p>
+                <p className="text-sm font-medium text-muted-foreground">Active Classes</p>
                 <p className="text-3xl font-bold">{stats.active}</p>
               </div>
               <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                <Award className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <Calendar className="h-4 w-4 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </CardContent>
@@ -369,11 +350,11 @@ export default function TeachersPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Subjects Taught</p>
-                <p className="text-3xl font-bold">{stats.subjects}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Students</p>
+                <p className="text-3xl font-bold">{stats.totalStudents}</p>
               </div>
               <div className="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                <BookOpen className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </CardContent>
@@ -383,11 +364,11 @@ export default function TeachersPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Avg Classes</p>
-                <p className="text-3xl font-bold">{stats.avgClasses}</p>
+                <p className="text-sm font-medium text-muted-foreground">Avg Utilization</p>
+                <p className="text-3xl font-bold">{stats.avgUtilization}%</p>
               </div>
               <div className="h-8 w-8 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
-                <Calendar className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                <BookOpen className="h-4 w-4 text-orange-600 dark:text-orange-400" />
               </div>
             </div>
           </CardContent>
@@ -398,9 +379,9 @@ export default function TeachersPage() {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-            <CardTitle>Teachers List</CardTitle>
+            <CardTitle>Classes List</CardTitle>
             <div className="flex items-center space-x-2">
-              {selectedTeachers.length > 0 && (
+              {selectedClasses.length > 0 && (
                 <>
                   <Button
                     variant="outline"
@@ -409,7 +390,7 @@ export default function TeachersPage() {
                     className="text-red-600 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Delete ({selectedTeachers.length})
+                    Delete ({selectedClasses.length})
                   </Button>
                 </>
               )}
@@ -433,7 +414,7 @@ export default function TeachersPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Search teachers by name, email, employee ID, or subject..."
+                placeholder="Search classes by name, level, section, or teacher..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -443,10 +424,10 @@ export default function TeachersPage() {
 
           {showFilters && (
             <div className="mb-4">
-              <TeacherFiltersPanel
+              <ClassFiltersPanel
                 filters={filters}
                 onFiltersChange={setFilters}
-                subjects={subjects}
+                teachers={teachers}
               />
             </div>
           )}
@@ -458,9 +439,9 @@ export default function TeachersPage() {
           ) : (
             <DataTable
               columns={columns}
-              data={filteredTeachers}
+              data={filteredClasses}
               searchKey="name"
-              onRowClick={(teacher) => router.push(`/teachers/${teacher.id}`)}
+              onRowClick={(classItem) => router.push(`/classes/${classItem.id}`)}
             />
           )}
         </CardContent>

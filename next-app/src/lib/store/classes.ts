@@ -1,7 +1,27 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Class, CreateClassData, ClassFilters } from '@/lib/types'
+/**
+ * Class Store
+ * Manages class data and operations using TanStack Query and API client
+ */
 
-// Mock data for classes
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { classService } from '../api/classes'
+import { handleApiError } from '../api/client'
+import type { Class, CreateClassData, ClassFilters } from '../types'
+import type { ClassCreateData, ClassUpdateData, ClassListParams } from '../api/classes'
+
+// Query keys for React Query caching
+export const CLASS_KEYS = {
+  all: ['classes'] as const,
+  lists: () => [...CLASS_KEYS.all, 'list'] as const,
+  list: (params?: ClassListParams) => [...CLASS_KEYS.lists(), params] as const,
+  details: () => [...CLASS_KEYS.all, 'detail'] as const,
+  detail: (id: string) => [...CLASS_KEYS.details(), id] as const,
+  stats: () => [...CLASS_KEYS.all, 'stats'] as const,
+  levels: () => [...CLASS_KEYS.all, 'levels'] as const,
+  academicYears: () => [...CLASS_KEYS.all, 'academic-years'] as const,
+}
+
+// Mock data for development/fallback (remove when backend is ready)
 const mockClasses: Class[] = [
   {
     id: '1',
@@ -328,62 +348,246 @@ const deleteClass = async (id: string): Promise<void> => {
   mockClasses.splice(index, 1)
 }
 
-// Query keys
-export const classKeys = {
-  all: ['classes'] as const,
-  lists: () => [...classKeys.all, 'list'] as const,
-  list: (filters: any) => [...classKeys.lists(), filters] as const,
-  details: () => [...classKeys.all, 'detail'] as const,
-  detail: (id: string) => [...classKeys.details(), id] as const,
-}
-
-// Hooks
-export const useClasses = (filters: ClassFilters = {}) => {
+// Class Queries with API Integration
+export function useClasses(params?: ClassListParams) {
   return useQuery({
-    queryKey: classKeys.list(filters),
-    queryFn: () => fetchClasses(filters),
+    queryKey: CLASS_KEYS.list(params),
+    queryFn: async () => {
+      const response = await classService.getClasses(params)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch classes')
+      }
+      return response.data || []
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   })
 }
 
-export const useClass = (id: string) => {
+export function useClass(id: string) {
   return useQuery({
-    queryKey: classKeys.detail(id),
-    queryFn: () => fetchClass(id),
+    queryKey: CLASS_KEYS.detail(id),
+    queryFn: async () => {
+      const response = await classService.getClass(id)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch class')
+      }
+      return response.data
+    },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   })
 }
 
-export const useCreateClass = () => {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: createClass,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: classKeys.all })
+export function useClassStats() {
+  return useQuery({
+    queryKey: CLASS_KEYS.stats(),
+    queryFn: async () => {
+      const response = await classService.getClassStats()
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch class statistics')
+      }
+      return response.data
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
   })
 }
 
-export const useUpdateClass = () => {
+export function useLevels() {
+  return useQuery({
+    queryKey: CLASS_KEYS.levels(),
+    queryFn: async () => {
+      const response = await classService.getLevels()
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch levels')
+      }
+      return response.data || []
+    },
+    staleTime: 60 * 60 * 1000, // 1 hour
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours
+  })
+}
+
+export function useAcademicYears() {
+  return useQuery({
+    queryKey: CLASS_KEYS.academicYears(),
+    queryFn: async () => {
+      const response = await classService.getAcademicYears()
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch academic years')
+      }
+      return response.data || []
+    },
+    staleTime: 60 * 60 * 1000, // 1 hour
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours
+  })
+}
+
+export function useCreateClass() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CreateClassData }) =>
-      updateClass(id, data),
+    mutationFn: async (data: ClassCreateData) => {
+      const response = await classService.createClass(data)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to create class')
+      }
+      return response.data
+    },
+    onSuccess: (newClass) => {
+      queryClient.invalidateQueries({ queryKey: CLASS_KEYS.lists() })
+      queryClient.invalidateQueries({ queryKey: CLASS_KEYS.stats() })
+      
+      if (newClass) {
+        queryClient.setQueryData(CLASS_KEYS.detail(newClass.id), newClass)
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to create class:', error)
+    }
+  })
+}
+
+export function useUpdateClass() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: ClassUpdateData }) => {
+      const response = await classService.updateClass(id, data)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update class')
+      }
+      return response.data
+    },
     onSuccess: (updatedClass) => {
-      queryClient.invalidateQueries({ queryKey: classKeys.all })
-      queryClient.setQueryData(classKeys.detail(updatedClass.id), updatedClass)
+      queryClient.invalidateQueries({ queryKey: CLASS_KEYS.lists() })
+      queryClient.invalidateQueries({ queryKey: CLASS_KEYS.stats() })
+      
+      if (updatedClass) {
+        queryClient.setQueryData(CLASS_KEYS.detail(updatedClass.id), updatedClass)
+      }
     },
+    onError: (error) => {
+      console.error('Failed to update class:', error)
+    }
   })
 }
 
-export const useDeleteClass = () => {
+export function useDeleteClass() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: deleteClass,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: classKeys.all })
+    mutationFn: async (id: string) => {
+      const response = await classService.deleteClass(id)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete class')
+      }
+      return response.data
     },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: CLASS_KEYS.lists() })
+      queryClient.invalidateQueries({ queryKey: CLASS_KEYS.stats() })
+      queryClient.removeQueries({ queryKey: CLASS_KEYS.detail(id) })
+    },
+    onError: (error) => {
+      console.error('Failed to delete class:', error)
+    }
   })
 }
+
+export function useSearchClasses(query: string) {
+  return useQuery({
+    queryKey: [...CLASS_KEYS.all, 'search', query] as const,
+    queryFn: async () => {
+      const response = await classService.searchClasses(query)
+      if (!response.success) {
+        throw new Error(response.message || 'Search failed')
+      }
+      return response.data || []
+    },
+    enabled: !!query && query.length > 2,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  })
+}
+
+export function useClassesByTeacher(teacherId: string) {
+  return useQuery({
+    queryKey: [...CLASS_KEYS.all, 'teacher', teacherId] as const,
+    queryFn: async () => {
+      const response = await classService.getClassesByTeacher(teacherId)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch classes by teacher')
+      }
+      return response.data || []
+    },
+    enabled: !!teacherId,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useAssignTeacher() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ classId, teacherId }: { classId: string; teacherId: string }) => {
+      const response = await classService.assignTeacher(classId, teacherId)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to assign teacher')
+      }
+      return response.data
+    },
+    onSuccess: (updatedClass) => {
+      queryClient.invalidateQueries({ queryKey: CLASS_KEYS.lists() })
+      
+      if (updatedClass) {
+        queryClient.setQueryData(CLASS_KEYS.detail(updatedClass.id), updatedClass)
+      }
+    }
+  })
+}
+
+export function useImportClasses() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const response = await classService.importClasses(file)
+      if (!response.success) {
+        throw new Error(response.message || 'Import failed')
+      }
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CLASS_KEYS.all })
+    }
+  })
+}
+
+// Helper function to convert between data formats
+export function convertToApiFormat(classData: CreateClassData): ClassCreateData {
+  return {
+    name: classData.name,
+    level: classData.level,
+    section: classData.section,
+    academicYear: classData.academicYear,
+    capacity: classData.capacity,
+    classTeacherId: classData.classTeacherId,
+    subjects: classData.subjects || [],
+    classroom: classData.room,
+    description: classData.description,
+    isActive: classData.isActive !== false,
+    schedule: classData.schedule ? {
+      [classData.schedule.daysOfWeek[0]]: [{
+        startTime: classData.schedule.startTime,
+        endTime: classData.schedule.endTime,
+        subject: '',
+        teacher: ''
+      }]
+    } : undefined
+  }
+}
+
+// Backward compatibility
+export const classKeys = CLASS_KEYS

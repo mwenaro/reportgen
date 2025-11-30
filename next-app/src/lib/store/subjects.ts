@@ -1,7 +1,27 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Subject, CreateSubjectData, SubjectFilters } from '@/lib/types'
+/**
+ * Subject Store
+ * Manages subject data and operations using TanStack Query and API client
+ */
 
-// Mock subjects data
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { subjectService } from '../api/subjects'
+import { handleApiError } from '../api/client'
+import type { Subject, CreateSubjectData, SubjectFilters } from '../types'
+import type { SubjectCreateData, SubjectUpdateData, SubjectListParams } from '../api/subjects'
+
+// Query keys for React Query caching
+export const SUBJECT_KEYS = {
+  all: ['subjects'] as const,
+  lists: () => [...SUBJECT_KEYS.all, 'list'] as const,
+  list: (params?: SubjectListParams) => [...SUBJECT_KEYS.lists(), params] as const,
+  details: () => [...SUBJECT_KEYS.all, 'detail'] as const,
+  detail: (id: string) => [...SUBJECT_KEYS.details(), id] as const,
+  stats: () => [...SUBJECT_KEYS.all, 'stats'] as const,
+  departments: () => [...SUBJECT_KEYS.all, 'departments'] as const,
+  levels: () => [...SUBJECT_KEYS.all, 'levels'] as const,
+}
+
+// Mock subjects data for development/fallback (remove when backend is ready)
 const mockSubjects: Subject[] = [
   {
     id: '1',
@@ -310,62 +330,215 @@ const deleteSubject = async (id: string): Promise<void> => {
   mockSubjects.splice(index, 1)
 }
 
-// Query keys
-export const subjectKeys = {
-  all: ['subjects'] as const,
-  lists: () => [...subjectKeys.all, 'list'] as const,
-  list: (filters: SubjectFilters) => [...subjectKeys.lists(), { filters }] as const,
-  details: () => [...subjectKeys.all, 'detail'] as const,
-  detail: (id: string) => [...subjectKeys.details(), id] as const,
-}
-
-// Hooks
-export const useSubjects = (filters: SubjectFilters = {}) => {
+// Subject Queries with API Integration
+export function useSubjects(params?: SubjectListParams) {
   return useQuery({
-    queryKey: subjectKeys.list(filters),
-    queryFn: () => fetchSubjects(filters),
+    queryKey: SUBJECT_KEYS.list(params),
+    queryFn: async () => {
+      const response = await subjectService.getSubjects(params)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch subjects')
+      }
+      return response.data || []
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   })
 }
 
-export const useSubject = (id: string) => {
+export function useSubject(id: string) {
   return useQuery({
-    queryKey: subjectKeys.detail(id),
-    queryFn: () => fetchSubject(id),
+    queryKey: SUBJECT_KEYS.detail(id),
+    queryFn: async () => {
+      const response = await subjectService.getSubject(id)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch subject')
+      }
+      return response.data
+    },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   })
 }
 
-export const useCreateSubject = () => {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: createSubject,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: subjectKeys.all })
+export function useSubjectStats() {
+  return useQuery({
+    queryKey: SUBJECT_KEYS.stats(),
+    queryFn: async () => {
+      const response = await subjectService.getSubjectStats()
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch subject statistics')
+      }
+      return response.data
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
   })
 }
 
-export const useUpdateSubject = () => {
+export function useSubjectDepartments() {
+  return useQuery({
+    queryKey: SUBJECT_KEYS.departments(),
+    queryFn: async () => {
+      const response = await subjectService.getDepartments()
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch departments')
+      }
+      return response.data || []
+    },
+    staleTime: 60 * 60 * 1000, // 1 hour
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours
+  })
+}
+
+export function useSubjectLevels() {
+  return useQuery({
+    queryKey: SUBJECT_KEYS.levels(),
+    queryFn: async () => {
+      const response = await subjectService.getLevels()
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch levels')
+      }
+      return response.data || []
+    },
+    staleTime: 60 * 60 * 1000, // 1 hour
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours
+  })
+}
+
+export function useCreateSubject() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CreateSubjectData }) =>
-      updateSubject(id, data),
+    mutationFn: async (data: SubjectCreateData) => {
+      const response = await subjectService.createSubject(data)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to create subject')
+      }
+      return response.data
+    },
+    onSuccess: (newSubject) => {
+      queryClient.invalidateQueries({ queryKey: SUBJECT_KEYS.lists() })
+      queryClient.invalidateQueries({ queryKey: SUBJECT_KEYS.stats() })
+      
+      if (newSubject) {
+        queryClient.setQueryData(SUBJECT_KEYS.detail(newSubject.id), newSubject)
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to create subject:', error)
+    }
+  })
+}
+
+export function useUpdateSubject() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: SubjectUpdateData }) => {
+      const response = await subjectService.updateSubject(id, data)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update subject')
+      }
+      return response.data
+    },
     onSuccess: (updatedSubject) => {
-      queryClient.invalidateQueries({ queryKey: subjectKeys.all })
-      queryClient.setQueryData(subjectKeys.detail(updatedSubject.id), updatedSubject)
+      queryClient.invalidateQueries({ queryKey: SUBJECT_KEYS.lists() })
+      queryClient.invalidateQueries({ queryKey: SUBJECT_KEYS.stats() })
+      
+      if (updatedSubject) {
+        queryClient.setQueryData(SUBJECT_KEYS.detail(updatedSubject.id), updatedSubject)
+      }
     },
+    onError: (error) => {
+      console.error('Failed to update subject:', error)
+    }
   })
 }
 
-export const useDeleteSubject = () => {
+export function useDeleteSubject() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: deleteSubject,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: subjectKeys.all })
+    mutationFn: async (id: string) => {
+      const response = await subjectService.deleteSubject(id)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete subject')
+      }
+      return response.data
     },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: SUBJECT_KEYS.lists() })
+      queryClient.invalidateQueries({ queryKey: SUBJECT_KEYS.stats() })
+      queryClient.removeQueries({ queryKey: SUBJECT_KEYS.detail(id) })
+    },
+    onError: (error) => {
+      console.error('Failed to delete subject:', error)
+    }
   })
 }
+
+export function useSearchSubjects(query: string) {
+  return useQuery({
+    queryKey: [...SUBJECT_KEYS.all, 'search', query] as const,
+    queryFn: async () => {
+      const response = await subjectService.searchSubjects(query)
+      if (!response.success) {
+        throw new Error(response.message || 'Search failed')
+      }
+      return response.data || []
+    },
+    enabled: !!query && query.length > 2,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  })
+}
+
+export function useSubjectsByDepartment(department: string) {
+  return useQuery({
+    queryKey: [...SUBJECT_KEYS.all, 'department', department] as const,
+    queryFn: async () => {
+      const response = await subjectService.getSubjectsByDepartment(department)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch subjects by department')
+      }
+      return response.data || []
+    },
+    enabled: !!department,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useImportSubjects() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const response = await subjectService.importSubjects(file)
+      if (!response.success) {
+        throw new Error(response.message || 'Import failed')
+      }
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: SUBJECT_KEYS.all })
+    }
+  })
+}
+
+// Helper function to convert between data formats
+export function convertToApiFormat(subject: CreateSubjectData): SubjectCreateData {
+  return {
+    name: subject.name,
+    code: subject.code,
+    description: subject.description || '',
+    department: subject.department || '',
+    level: subject.level || '',
+    credits: subject.credits,
+    isActive: subject.isActive !== false,
+  }
+}
+
+// Backward compatibility
+export const subjectKeys = SUBJECT_KEYS
+export const useSubjects_ = useSubjects // For any components using old name

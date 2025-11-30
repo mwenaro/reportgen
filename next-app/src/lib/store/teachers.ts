@@ -1,7 +1,26 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Teacher, CreateTeacherData, TeacherFilters } from '@/lib/types'
+/**
+ * Teacher Store
+ * Manages teacher data and operations using TanStack Query and API client
+ */
 
-// Mock API functions
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { teacherService } from '../api/teachers'
+import { handleApiError } from '../api/client'
+import type { Teacher, TeacherFilters, CreateTeacherData } from '../types'
+import type { TeacherCreateData, TeacherUpdateData, TeacherListParams } from '../api/teachers'
+
+// Query keys for React Query caching
+export const TEACHER_KEYS = {
+  all: ['teachers'] as const,
+  lists: () => [...TEACHER_KEYS.all, 'list'] as const,
+  list: (params?: TeacherListParams) => [...TEACHER_KEYS.lists(), params] as const,
+  details: () => [...TEACHER_KEYS.all, 'detail'] as const,
+  detail: (id: string) => [...TEACHER_KEYS.details(), id] as const,
+  stats: () => [...TEACHER_KEYS.all, 'stats'] as const,
+  departments: () => [...TEACHER_KEYS.all, 'departments'] as const,
+}
+
+// Mock data for development/fallback (remove when backend is ready)
 const mockTeachers: Teacher[] = [
   {
     id: 'teacher-1',
@@ -344,11 +363,17 @@ export const teacherKeys = {
   detail: (id: string) => [...teacherKeys.details(), id] as const,
 }
 
-// React Query hooks
-export function useTeachers(filters: TeacherFilters = {}) {
+// Teacher Queries with API Integration
+export function useTeachers(params?: TeacherListParams) {
   return useQuery({
-    queryKey: teacherKeys.list(filters),
-    queryFn: () => teachersApi.getTeachers(filters),
+    queryKey: TEACHER_KEYS.list(params),
+    queryFn: async () => {
+      const response = await teacherService.getTeachers(params)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch teachers')
+      }
+      return response.data || []
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   })
@@ -356,68 +381,158 @@ export function useTeachers(filters: TeacherFilters = {}) {
 
 export function useTeacher(id: string) {
   return useQuery({
-    queryKey: teacherKeys.detail(id),
-    queryFn: () => teachersApi.getTeacher(id),
+    queryKey: TEACHER_KEYS.detail(id),
+    queryFn: async () => {
+      const response = await teacherService.getTeacher(id)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch teacher')
+      }
+      return response.data
+    },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   })
 }
 
+export function useTeacherStats() {
+  return useQuery({
+    queryKey: TEACHER_KEYS.stats(),
+    queryFn: async () => {
+      const response = await teacherService.getTeacherStats()
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch teacher statistics')
+      }
+      return response.data
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+  })
+}
+
 export function useCreateTeacher() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: teachersApi.createTeacher,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teacherKeys.lists() })
+    mutationFn: async (data: TeacherCreateData) => {
+      const response = await teacherService.createTeacher(data)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to create teacher')
+      }
+      return response.data
     },
+    onSuccess: (teacher) => {
+      queryClient.invalidateQueries({ queryKey: TEACHER_KEYS.lists() })
+      queryClient.invalidateQueries({ queryKey: TEACHER_KEYS.stats() })
+      
+      if (teacher) {
+        queryClient.setQueryData(TEACHER_KEYS.detail(teacher.id), teacher)
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to create teacher:', error)
+    }
   })
 }
 
 export function useUpdateTeacher() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<CreateTeacherData> }) =>
-      teachersApi.updateTeacher(id, data),
-    onSuccess: (teacher) => {
-      queryClient.invalidateQueries({ queryKey: teacherKeys.lists() })
-      queryClient.setQueryData(teacherKeys.detail(teacher.id), teacher)
+    mutationFn: async ({ id, data }: { id: string; data: TeacherUpdateData }) => {
+      const response = await teacherService.updateTeacher(id, data)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update teacher')
+      }
+      return response.data
     },
+    onSuccess: (teacher) => {
+      queryClient.invalidateQueries({ queryKey: TEACHER_KEYS.lists() })
+      queryClient.invalidateQueries({ queryKey: TEACHER_KEYS.stats() })
+      
+      if (teacher) {
+        queryClient.setQueryData(TEACHER_KEYS.detail(teacher.id), teacher)
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to update teacher:', error)
+    }
   })
 }
 
 export function useDeleteTeacher() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: teachersApi.deleteTeacher,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teacherKeys.lists() })
+    mutationFn: async (id: string) => {
+      const response = await teacherService.deleteTeacher(id)
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete teacher')
+      }
+      return response.data
     },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: TEACHER_KEYS.lists() })
+      queryClient.invalidateQueries({ queryKey: TEACHER_KEYS.stats() })
+      queryClient.removeQueries({ queryKey: TEACHER_KEYS.detail(id) })
+    },
+    onError: (error) => {
+      console.error('Failed to delete teacher:', error)
+    }
   })
 }
 
-export function useBulkUpdateTeachers() {
+export function useImportTeachers() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ ids, data }: { ids: string[]; data: Partial<Teacher> }) =>
-      teachersApi.bulkUpdateTeachers(ids, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teacherKeys.lists() })
+    mutationFn: async (file: File) => {
+      const response = await teacherService.importTeachers(file)
+      if (!response.success) {
+        throw new Error(response.message || 'Import failed')
+      }
+      return response.data
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TEACHER_KEYS.all })
+    }
   })
 }
 
-export function useBulkDeleteTeachers() {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: teachersApi.bulkDeleteTeachers,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teacherKeys.lists() })
-    },
-  })
+// Helper function to convert between data formats
+export function convertToApiFormat(teacher: CreateTeacherData): TeacherCreateData {
+  return {
+    employeeId: teacher.employeeId,
+    firstName: teacher.firstName || teacher.name?.split(' ')[0] || '',
+    lastName: teacher.lastName || teacher.name?.split(' ').slice(1).join(' ') || '',
+    email: teacher.email,
+    phone: teacher.phone,
+    address: teacher.address || '',
+    dateOfBirth: teacher.dateOfBirth?.toISOString().split('T')[0] || '',
+    gender: teacher.gender,
+    nationality: teacher.nationality || 'Kenyan',
+    qualification: teacher.qualification,
+    experience: teacher.experience,
+    specialization: Array.isArray(teacher.specialization) 
+      ? teacher.specialization 
+      : [teacher.specialization || ''],
+    subjects: teacher.subjects || [],
+    department: teacher.department || '',
+    joiningDate: teacher.hireDate?.toISOString().split('T')[0] || '',
+    contractType: teacher.contractType,
+    salary: teacher.salary,
+    status: teacher.status,
+    tscNumber: teacher.tscNumber,
+    emergencyContact: teacher.emergencyContact
+  }
+}
+
+// Backward compatibility
+export const teachersApi = {
+  getTeachers: (filters?: TeacherFilters) => teacherService.getTeachers(filters as TeacherListParams),
+  getTeacher: teacherService.getTeacher.bind(teacherService),
+  createTeacher: (data: CreateTeacherData) => teacherService.createTeacher(convertToApiFormat(data)),
+  updateTeacher: (id: string, data: Partial<CreateTeacherData>) => 
+    teacherService.updateTeacher(id, { ...convertToApiFormat(data as CreateTeacherData), updatedAt: new Date().toISOString() }),
+  deleteTeacher: teacherService.deleteTeacher.bind(teacherService)
 }

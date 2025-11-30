@@ -50,4 +50,38 @@ export interface ClassFilters {
   minEnrollment?: number
   maxEnrollment?: number
   search?: string
-}\n\nexport interface Grade {\n  id: string\n  studentId: string\n  subjectId: string\n  subjectName: string\n  examId: string\n  examName: string\n  mark: number\n  grade: string\n  points: number\n  term: string\n  academicYear: string\n  classId?: string\n  createdAt: Date\n  updatedAt: Date\n}\n\nexport interface CreateGradeData {\n  studentId: string\n  subjectId: string\n  subjectName: string\n  examId: string\n  examName: string\n  mark: number\n  grade: string\n  points: number\n  term: string\n  academicYear: string\n  classId?: string\n}\n\n// ============================================================================\n// TEACHER MANAGEMENT TYPES\n// ============================================================================\n\nexport interface Teacher {\n  id: string\n  employeeId: string\n  name: string\n  email?: string\n  phone?: string\n  gender: 'male' | 'female'\n  dateOfBirth: Date\n  address?: string\n  qualification?: string\n  experience?: string\n  specialization?: string\n  hireDate: Date\n  contractType: 'permanent' | 'contract' | 'temporary' | 'substitute'\n  status: 'active' | 'inactive' | 'on-leave'\n  salary?: number\n  subjects?: string[] // Array of subject IDs\n  classes?: string[] // Array of class IDs\n  tscNumber?: string // Teachers Service Commission Number\n  idNumber?: string\n  emergencyContact?: {\n    name?: string\n    phone?: string\n    relationship?: string\n  }\n  notes?: string\n  profileImage?: string\n  createdAt: Date\n  updatedAt: Date\n}\n\nexport interface CreateTeacherData {\n  employeeId: string\n  name: string\n  email?: string\n  phone?: string\n  gender: 'male' | 'female'\n  dateOfBirth: Date\n  address?: string\n  qualification?: string\n  experience?: string\n  specialization?: string\n  hireDate: Date\n  contractType: 'permanent' | 'contract' | 'temporary' | 'substitute'\n  status: 'active' | 'inactive' | 'on-leave'\n  salary?: number\n  subjects?: string[]\n  classes?: string[]\n  tscNumber?: string\n  idNumber?: string\n  emergencyContact?: {\n    name?: string\n    phone?: string\n    relationship?: string\n  }\n  notes?: string\n  profileImage?: string\n}\n\nexport interface UpdateTeacherData extends Partial<CreateTeacherData> {}\n\nexport interface TeacherFilters {\n  status?: 'active' | 'inactive' | 'on-leave'\n  gender?: 'male' | 'female'\n  contractType?: 'permanent' | 'contract' | 'temporary' | 'substitute'\n  subjects?: string[]\n  hireDateFrom?: string\n  hireDateTo?: string\n  qualification?: string\n  experienceRange?: '0-2' | '3-5' | '6-10' | '10+'\n  minSalary?: number\n  maxSalary?: number\n}\n\n// ============================================================================\n// SUBJECT MANAGEMENT TYPES\n// ============================================================================\n\nexport interface Subject {\n  id: string\n  name: string\n  code: string\n  description?: string\n  isActive: boolean\n  createdAt: Date\n  updatedAt: Date\n}\n\nexport interface CreateSubjectData {\n  name: string\n  code: string\n  description?: string\n}\n\nexport interface UpdateSubjectData extends Partial<CreateSubjectData> {}
+}\n\nexport interface Grade {\n  id: string\n  studentId: string\n  subjectId: string\n  subjectName: string\n  examId: string\n  examName: string\n  mark: number\n  grade: string\n  points: number\n  term: string\n  academicYear: string\n  classId?: string\n  createdAt: Date\n  updatedAt: Date\n}\n\nexport interface CreateGradeData {\n  studentId: string\n  subjectId: string\n  subjectName: string\n  examId: string\n  examName: string\n  mark: number\n  grade: string\n  points: number\n  term: string\n  academicYear: string\n  classId?: string\n}\n\n// ============================================================================\n// TEACHER MANAGEMENT TYPES\n// ============================================================================\n\nexport interface Teacher {\n  id: string\n  employeeId: string\n  name: string\n  email?: string\n  phone?: string\n  gender: 'male' | 'female'\n  dateOfBirth: Date\n  address?: string\n  qualification?: string\n  experience?: string\n  specialization?: string\n  hireDate: Date\n  contractType: 'permanent' | 'contract' | 'temporary' | 'substitute'\n  status: 'active' | 'inactive' | 'on-leave'\n  salary?: number\n  subjects?: string[] // Array of subject IDs\n  classes?: string[] // Array of class IDs\n  tscNumber?: string // Teachers Service Commission Number\n  idNumber?: string\n  emergencyContact?: {\n    name?: string\n    phone?: string\n    relationship?: string\n  }\n  notes?: string\n  profileImage?: string\n  createdAt: Date\n  updatedAt: Date\n}\n\nexport interface CreateTeacherData {\n  employeeId: string\n  name: string\n  email?: string\n  phone?: string\n  gender: 'male' | 'female'\n  dateOfBirth: Date\n  address?: string\n  qualification?: string\n  experience?: string\n  specialization?: string\n  hireDate: Date\n  contractType: 'permanent' | 'contract' | 'temporary' | 'substitute'\n  status: 'active' | 'inactive' | 'on-leave'\n  salary?: number\n  subjects?: string[]\n  classes?: string[]\n  tscNumber?: string\n  idNumber?: string\n  emergencyContact?: {\n    name?: string\n    phone?: string\n    relationship?: string\n  }\n  notes?: string\n  profileImage?: string\n}\n\nexport interface UpdateTeacherData extends Partial<CreateTeacherData> {}\n\nexport interface TeacherFilters {\n  status?: 'active' | 'inactive' | 'on-leave'\n  gender?: 'male' | 'female'\n  contractType?: 'permanent' | 'contract' | 'temporary' | 'substitute'\n  subjects?: string[]\n  hireDateFrom?: string\n  hireDateTo?: string\n  qualification?: string\n  experienceRange?: '0-2' | '3-5' | '6-10' | '10+'\n  minSalary?: number\n  maxSalary?: number\n}\n\n// ============================================================================\n// SUBJECT MANAGEMENT TYPES\n// ============================================================================\n\nexport interface Subject {
+  id: string
+  name: string
+  code: string
+  description?: string
+  department?: string
+  level?: string
+  credits: number
+  teacherCount?: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateSubjectData {
+  name: string
+  code: string
+  description?: string
+  department?: string
+  level?: string
+  credits: number
+  isActive: boolean
+}
+
+export interface UpdateSubjectData extends Partial<CreateSubjectData> {}
+
+export interface SubjectFilters {
+  department?: string
+  level?: string
+  isActive?: boolean
+  minCredits?: number
+  maxCredits?: number
+  hasTeachers?: boolean
+  search?: string
+}

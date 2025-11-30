@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
+import { withErrorHandler, validateRequestBody, validateQueryParams } from '@/lib/api/middleware'
+import { teacherCreateSchema, teacherQuerySchema } from '@/lib/validations/api'
 
 // Types
 interface Teacher {
@@ -157,8 +159,7 @@ function verifyToken(request: NextRequest) {
 }
 
 // GET /api/teachers - List all teachers with filtering and pagination
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withErrorHandler(async (request: NextRequest) => {
     // Verify authentication
     const user = verifyToken(request)
     if (!user) {
@@ -174,14 +175,16 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     
-    // Parse query parameters
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const search = searchParams.get('search') || ''
-    const status = searchParams.get('status') || ''
-    const department = searchParams.get('department') || ''
-    const sortBy = searchParams.get('sortBy') || 'lastName'
-    const sortOrder = searchParams.get('sortOrder') || 'asc'
+    // Validate query parameters
+    const {
+      page,
+      limit,
+      search,
+      status,
+      department,
+      sortBy,
+      sortOrder
+    } = validateQueryParams(teacherQuerySchema, searchParams)
 
     // Filter teachers
     let filteredTeachers = [...MOCK_TEACHERS]
@@ -259,22 +262,10 @@ export async function GET(request: NextRequest) {
       message: 'Teachers retrieved successfully'
     })
 
-  } catch (error) {
-    console.error('Get teachers error:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Internal server error',
-        errors: { server: ['An unexpected error occurred'] }
-      },
-      { status: 500 }
-    )
-  }
-}
+})
 
 // POST /api/teachers - Create new teacher
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withErrorHandler(async (request: NextRequest) => {
     // Verify authentication
     const user = verifyToken(request)
     if (!user) {
@@ -288,42 +279,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const teacherData = await request.json()
-
-    // Validate required fields
-    const errors: Record<string, string[]> = {}
+    const requestBody = await request.json()
     
-    if (!teacherData.firstName?.trim()) {
-      errors.firstName = ['First name is required']
-    }
+    // Validate request body
+    const teacherData = validateRequestBody(teacherCreateSchema, requestBody)
     
-    if (!teacherData.lastName?.trim()) {
-      errors.lastName = ['Last name is required']
-    }
-    
-    if (!teacherData.email?.trim()) {
-      errors.email = ['Email is required']
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(teacherData.email)) {
-        errors.email = ['Please enter a valid email address']
-      } else if (MOCK_TEACHERS.some(t => t.email.toLowerCase() === teacherData.email.toLowerCase())) {
-        errors.email = ['This email is already in use']
-      }
-    }
-
-    if (teacherData.employeeId && MOCK_TEACHERS.some(t => t.employeeId === teacherData.employeeId)) {
-      errors.employeeId = ['This employee ID is already in use']
-    }
-
-    if (Object.keys(errors).length > 0) {
+    // Check for duplicate email
+    if (MOCK_TEACHERS.some(t => t.email.toLowerCase() === teacherData.email.toLowerCase())) {
       return NextResponse.json(
         { 
           success: false, 
-          message: 'Validation failed',
-          errors
+          message: 'Email already exists',
+          errors: { email: ['This email is already in use'] }
         },
-        { status: 400 }
+        { status: 409 }
+      )
+    }
+
+    // Check for duplicate employee ID
+    if (teacherData.employeeId && MOCK_TEACHERS.some(t => t.employeeId === teacherData.employeeId)) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Employee ID already exists',
+          errors: { employeeId: ['This employee ID is already in use'] }
+        },
+        { status: 409 }
       )
     }
 
@@ -366,15 +347,4 @@ export async function POST(request: NextRequest) {
       message: 'Teacher created successfully'
     }, { status: 201 })
 
-  } catch (error) {
-    console.error('Create teacher error:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Internal server error',
-        errors: { server: ['An unexpected error occurred'] }
-      },
-      { status: 500 }
-    )
-  }
-}
+})

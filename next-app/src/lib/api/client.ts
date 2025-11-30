@@ -3,6 +3,9 @@
  * Handles communication with Next.js API routes (/api/*)
  */
 
+import { ErrorHandler } from '../error-handling/client'
+import { checkRateLimit } from './middleware'
+
 interface ApiConfig {
   baseURL: string
   timeout: number

@@ -402,3 +402,107 @@ export function getThemeColors(theme: 'light' | 'dark') {
     ring: theme === 'light' ? 'hsl(221.2 83.2% 53.3%)' : 'hsl(224.3 76.3% 94.1%)',
   }
 }
+
+// ============================================================================
+// STUDENT MANAGEMENT UTILITIES
+// ============================================================================
+
+/**
+ * Generate unique admission number
+ */
+export function generateAdmissionNumber(): string {
+  const year = new Date().getFullYear()
+  const randomNum = Math.floor(Math.random() * 9000) + 1000 // 4-digit random number
+  return `STD/${year}/${randomNum.toString().padStart(4, '0')}`
+}
+
+/**
+ * Calculate age from date of birth
+ */
+export function calculateAge(dateOfBirth: Date): number {
+  const today = new Date()
+  const birthDate = new Date(dateOfBirth)
+  let age = today.getFullYear() - birthDate.getFullYear()
+  const monthDiff = today.getMonth() - birthDate.getMonth()
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--
+  }
+  
+  return age
+}
+
+/**
+ * Format age as string
+ */
+export function formatAge(dateOfBirth: Date): string {
+  const age = calculateAge(dateOfBirth)
+  return `${age}`
+}
+
+/**
+ * Get academic year from date
+ */
+export function getAcademicYear(date: Date = new Date()): string {
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1 // January is 1
+  
+  // Academic year typically starts in September (month 9)
+  if (month >= 9) {
+    return `${year}/${year + 1}`
+  } else {
+    return `${year - 1}/${year}`
+  }
+}
+
+/**
+ * Get current term based on date
+ */
+export function getCurrentTerm(date: Date = new Date()): string {
+  const month = date.getMonth() + 1 // January is 1
+  
+  if (month >= 9 || month <= 12) return 'Term 1'
+  if (month >= 1 && month <= 4) return 'Term 2'
+  if (month >= 5 && month <= 8) return 'Term 3'
+  
+  return 'Term 1'
+}
+
+/**
+ * Calculate grade from mark
+ */
+export function calculateGrade(mark: number): { grade: string; points: number } {
+  if (mark >= 80) return { grade: 'A', points: 12 }
+  if (mark >= 75) return { grade: 'A-', points: 11 }
+  if (mark >= 70) return { grade: 'B+', points: 10 }
+  if (mark >= 65) return { grade: 'B', points: 9 }
+  if (mark >= 60) return { grade: 'B-', points: 8 }
+  if (mark >= 55) return { grade: 'C+', points: 7 }
+  if (mark >= 50) return { grade: 'C', points: 6 }
+  if (mark >= 45) return { grade: 'C-', points: 5 }
+  if (mark >= 40) return { grade: 'D+', points: 4 }
+  if (mark >= 35) return { grade: 'D', points: 3 }
+  if (mark >= 30) return { grade: 'D-', points: 2 }
+  return { grade: 'E', points: 1 }
+}
+
+/**
+ * Calculate GPA from grades
+ */
+export function calculateGPA(grades: Array<{ points: number }>): number {
+  if (grades.length === 0) return 0
+  
+  const totalPoints = grades.reduce((sum, grade) => sum + grade.points, 0)
+  return Math.round((totalPoints / grades.length) * 100) / 100 // Round to 2 decimal places
+}
+
+/**
+ * Get class level from class name
+ */
+export function getClassLevel(className: string): number {
+  const match = className.match(/Form\s*(\d+)|Class\s*(\d+)|Grade\s*(\d+)|Year\s*(\d+)/i)
+  if (match) {
+    return parseInt(match[1] || match[2] || match[3] || match[4])
+  }
+  return 1 // Default to level 1
+}

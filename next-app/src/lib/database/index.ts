@@ -1,218 +1,200 @@
-// Multi-tenant database connection manager
-// Supports both MongoDB (online) and NeDB (offline)
+export { default as SchoolModel } from './models/school.model'
+export { default as StudentModel } from './models/student.model'
+export { default as TeacherModel } from './models/teacher.model'
+export { default as ClassModel } from './models/class.model'
+export { default as SubjectModel } from './models/subject.model'
+export { default as UserModel } from './models/user.model'
+export { default as ExamModel } from './models/exam.model'
 
-import mongoose, { Connection } from 'mongoose'
-import Datastore from 'nedb-promises'
-import { getTenantDatabaseName } from '../tenant-resolver'
+// Database connection and management
+export { 
+  DatabaseManager, 
+  initializeDatabase as initDB, 
+  getDatabase,
+  createDatabaseConfig
+} from './connection'
+export type { DatabaseConfig, ConnectionState } from './connection'
 
-// Type alias for NeDB Datastore to handle generic type issues
-type NeDBStore = Datastore<any>
+// NeDB adapter for offline support
+export { 
+  NeDBAdapter, 
+  getNeDBAdapter 
+} from './nedb-adapter'
+export type { 
+  NeDBConfig, 
+  SyncResult, 
+  ConflictResolution 
+} from './nedb-adapter'
 
-export interface DatabaseConfig {
-  mongodb: {
-    uri: string
-    options: mongoose.ConnectOptions
-  }
-  nedb: {
-    dataPath: string
-  }
-  mode: 'mongodb' | 'nedb' | 'hybrid'
-}
+// Database utilities and tenant isolation
+export { 
+  DatabaseUtils, 
+  getDatabaseUtils,
+  TenantQueryBuilder
+} from './utils'
+export type { 
+  TenantContext, 
+  QueryOptions, 
+  BulkOperation 
+} from './utils'
 
-export const databaseConfig: DatabaseConfig = {
-  mongodb: {
-    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017',
-    options: {
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-    }
-  },
-  nedb: {
-    dataPath: process.env.NEDB_DATA_PATH || './data'
-  },
-  mode: (process.env.DB_MODE as 'mongodb' | 'nedb' | 'hybrid') || 'hybrid'
-}
+// Migration and seeding
+export { 
+  MigrationRunner, 
+  SeedRunner,
+  runMigrations,
+  runSeeds,
+  initializeDatabase,
+  migrations,
+  getDefaultSeeds
+} from './migrations'
+export type { 
+  Migration, 
+  SeedData, 
+  MigrationStatus 
+} from './migrations'
 
-// Connection pool for multi-tenant MongoDB connections
-const mongoConnections: Map<string, Connection> = new Map()
+// Model registry for dynamic access
+export const ModelRegistry = {
+  School: 'SchoolModel',
+  Student: 'StudentModel', 
+  Teacher: 'TeacherModel',
+  Class: 'ClassModel',
+  Subject: 'SubjectModel',
+  User: 'UserModel',
+  Exam: 'ExamModel'
+} as const
 
-// NeDB datastores for offline support
-const nedbStores: Map<string, Map<string, NeDBStore>> = new Map()
+// Collection names
+export const Collections = {
+  SCHOOLS: 'schools',
+  STUDENTS: 'students',
+  TEACHERS: 'teachers',
+  CLASSES: 'classes',
+  SUBJECTS: 'subjects',
+  USERS: 'users',
+  EXAMS: 'exams'
+} as const
 
-export interface DatabaseConnection {
-  type: 'mongodb' | 'nedb'
-  connection: Connection | Map<string, NeDBStore>
-  tenantId: string
-}
+// Type definitions
+export type ModelName = keyof typeof ModelRegistry
+export type CollectionName = typeof Collections[keyof typeof Collections]
 
-/**
- * Get or create database connection for a specific tenant
- * @param tenantId - The tenant ID
- * @param preferOffline - Prefer NeDB over MongoDB if available
- * @returns Promise<DatabaseConnection>
- */
-export async function getTenantDatabase(tenantId: string, preferOffline = false): Promise<DatabaseConnection> {
-  const dbName = getTenantDatabaseName(tenantId)
-  
-  // Check if offline mode is preferred or MongoDB is unavailable
-  if (preferOffline || databaseConfig.mode === 'nedb') {
-    return getNeDBConnection(tenantId)
-  }
-  
-  // Try MongoDB first
-  try {
-    if (databaseConfig.mode === 'mongodb' || databaseConfig.mode === 'hybrid') {
-      return await getMongoConnection(tenantId, dbName)
-    }
-  } catch (error) {
-    console.warn(`MongoDB connection failed for tenant ${tenantId}, falling back to NeDB:`, error)
-    
-    // Fall back to NeDB if MongoDB fails and hybrid mode is enabled
-    if (databaseConfig.mode === 'hybrid') {
-      return getNeDBConnection(tenantId)
-    }
-    
-    throw error
-  }
-  
-  throw new Error(`No database connection available for tenant ${tenantId}`)
-}
+// ============================================================================
+// DATABASE INITIALIZATION HELPER
+// ============================================================================
 
-/**
- * Get or create MongoDB connection for tenant
- */
-async function getMongoConnection(tenantId: string, dbName: string): Promise<DatabaseConnection> {
-  // Check if connection already exists
-  if (mongoConnections.has(tenantId)) {
-    const connection = mongoConnections.get(tenantId)!
-    if (connection.readyState === 1) {
-      return { type: 'mongodb', connection, tenantId }
-    }
-  }
-  
-  // Create new connection
-  const connection = mongoose.createConnection(databaseConfig.mongodb.uri, {
-    ...databaseConfig.mongodb.options,
-    dbName
-  })
-  
-  await connection.asPromise()
-  mongoConnections.set(tenantId, connection)
-  
-  return { type: 'mongodb', connection, tenantId }
+import { DatabaseManager, createDatabaseConfig } from './connection'
+import { initializeDatabase } from './migrations'
+import type { TenantContext } from './utils'
+
+export interface InitOptions {
+  environment?: 'development' | 'production' | 'test'
+  tenantContext?: TenantContext
+  runMigrations?: boolean
+  runSeeds?: boolean
+  autoSync?: boolean
 }
 
 /**
- * Get or create NeDB connection for tenant
+ * Initialize the complete database system with proper configuration
+ * @param options Initialization options
+ * @returns Promise<DatabaseManager>
  */
-function getNeDBConnection(tenantId: string): DatabaseConnection {
-  if (!nedbStores.has(tenantId)) {
-    const stores = new Map<string, NeDBStore>()
-    
-    // Initialize common collections
-    const collections = ['users', 'students', 'teachers', 'classes', 'subjects', 'exams', 'grades']
-    
-    collections.forEach(collection => {
-      const store = Datastore.create({
-        filename: `${databaseConfig.nedb.dataPath}/${tenantId}/${collection}.db`,
-        autoload: true,
-        timestampData: true
-      })
-      stores.set(collection, store)
+export const initializeDatabaseSystem = async (options: InitOptions = {}): Promise<DatabaseManager> => {
+  const {
+    environment = 'development',
+    tenantContext,
+    runMigrations = true,
+    runSeeds = true,
+    autoSync = environment !== 'test'
+  } = options
+
+  console.log(`🚀 Initializing database system for ${environment} environment...`)
+
+  // Create environment-specific configuration
+  const config = createDatabaseConfig(environment)
+  config.nedb = config.nedb || {}
+  config.nedb.autoSync = autoSync
+
+  // Initialize database manager
+  const dbManager = DatabaseManager.getInstance(config)
+  await dbManager.initialize()
+
+  console.log(`✅ Database connections established`)
+  console.log(`   - MongoDB: ${dbManager.isOnline() ? 'Connected' : 'Offline'}`)
+  console.log(`   - NeDB: ${dbManager.getNeDBAdapter() ? 'Ready' : 'Unavailable'}`)
+
+  // Run migrations and seeds if requested
+  if (runMigrations || runSeeds) {
+    try {
+      if (dbManager.isOnline()) {
+        await initializeDatabase(tenantContext)
+        console.log(`✅ Database schema and seed data ready`)
+      } else {
+        console.log(`⚠️  Skipping migrations/seeds - running offline`)
+      }
+    } catch (error) {
+      console.error(`❌ Database initialization failed:`, error)
+      throw error
+    }
+  }
+
+  return dbManager
+}
+
+/**
+ * Quick setup for common use cases
+ */
+export const quickSetup = {
+  /**
+   * Development setup with full features
+   */
+  development: async (tenantContext?: TenantContext) => {
+    return await initializeDatabaseSystem({
+      environment: 'development',
+      tenantContext,
+      runMigrations: true,
+      runSeeds: true,
+      autoSync: true
     })
-    
-    nedbStores.set(tenantId, stores)
-  }
-  
-  return {
-    type: 'nedb',
-    connection: nedbStores.get(tenantId)!,
-    tenantId
-  }
-}
+  },
 
-/**
- * Close database connection for a specific tenant
- */
-export async function closeTenantDatabase(tenantId: string): Promise<void> {
-  // Close MongoDB connection
-  if (mongoConnections.has(tenantId)) {
-    const connection = mongoConnections.get(tenantId)!
-    await connection.close()
-    mongoConnections.delete(tenantId)
-  }
-  
-  // NeDB connections are automatically managed
-  if (nedbStores.has(tenantId)) {
-    nedbStores.delete(tenantId)
-  }
-}
-
-/**
- * Close all database connections
- */
-export async function disconnectFromAllDatabases(): Promise<void> {
-  // Close all MongoDB connections
-  const closePromises = Array.from(mongoConnections.values()).map(conn => conn.close())
-  await Promise.all(closePromises)
-  mongoConnections.clear()
-  
-  // Clear NeDB stores
-  nedbStores.clear()
-}
-
-/**
- * Health check for database connections
- */
-export async function checkDatabaseHealth(): Promise<{
-  mongodb: boolean
-  nedb: boolean
-  tenants: string[]
-}> {
-  let mongodbHealthy = false
-  let nedbHealthy = true // NeDB is always available
-  
-  // Check MongoDB connectivity
-  try {
-    const testConnection = mongoose.createConnection(databaseConfig.mongodb.uri, {
-      serverSelectionTimeoutMS: 3000
+  /**
+   * Production setup with minimal logging
+   */
+  production: async (tenantContext?: TenantContext) => {
+    return await initializeDatabaseSystem({
+      environment: 'production',
+      tenantContext,
+      runMigrations: true,
+      runSeeds: false,
+      autoSync: true
     })
-    await testConnection.asPromise()
-    await testConnection.close()
-    mongodbHealthy = true
-  } catch (error) {
-    console.warn('MongoDB health check failed:', error)
-  }
-  
-  return {
-    mongodb: mongodbHealthy,
-    nedb: nedbHealthy,
-    tenants: Array.from(mongoConnections.keys())
-  }
-}
+  },
 
-/**
- * Sync data between MongoDB and NeDB for a tenant
- */
-export async function syncTenantData(tenantId: string, direction: 'mongo-to-nedb' | 'nedb-to-mongo' = 'mongo-to-nedb'): Promise<void> {
-  // This will be implemented in later prompts
-  console.log(`Data sync placeholder for tenant ${tenantId}, direction: ${direction}`)
-}
+  /**
+   * Test setup with isolated data
+   */
+  test: async () => {
+    return await initializeDatabaseSystem({
+      environment: 'test',
+      runMigrations: true,
+      runSeeds: true,
+      autoSync: false
+    })
+  },
 
-/**
- * Initialize database connections on startup
- */
-export async function initializeDatabases(): Promise<void> {
-  console.log('Initializing database connections...')
-  
-  const health = await checkDatabaseHealth()
-  console.log('Database health check:', health)
-  
-  // Set up cleanup on process exit
-  process.on('SIGINT', async () => {
-    console.log('Closing database connections...')
-    await disconnectFromAllDatabases()
-    process.exit(0)
-  })
+  /**
+   * Offline-only setup
+   */
+  offline: async (tenantContext?: TenantContext) => {
+    const config = createDatabaseConfig('development')
+    config.mongodb = undefined // Force offline mode
+    
+    const dbManager = DatabaseManager.getInstance(config)
+    await dbManager.initialize()
+    
+    return dbManager
+  }
 }

@@ -1,6 +1,6 @@
 /**
  * API Client Configuration
- * Handles communication with PHP backend services
+ * Handles communication with Next.js API routes (/api/*)
  */
 
 interface ApiConfig {
@@ -242,7 +242,7 @@ class ApiClient {
 
 // API Configuration
 const apiConfig: ApiConfig = {
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost/reportgen/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
   timeout: 30000, // 30 seconds
   retries: 3,
   retryDelay: 1000 // 1 second

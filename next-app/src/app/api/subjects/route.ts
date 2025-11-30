@@ -1,75 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-
-// Types
-interface Subject {
-  id: string
-  name: string
-  code: string
-  description?: string
-  department?: string
-  level?: string
-  credits: number
-  isActive: boolean
-  
-  // System fields
-  createdAt: string
-  updatedAt: string
-}
+import { connectDB } from '@/lib/db'
+import SubjectModel from '@/lib/models/subject.model'
+import mongoose from 'mongoose'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key'
-
-// Mock data - replace with actual database
-let MOCK_SUBJECTS: Subject[] = [
-  {
-    id: 'subject_1',
-    name: 'Advanced Mathematics',
-    code: 'MATH301',
-    description: 'Advanced mathematical concepts including calculus, algebra, and geometry',
-    department: 'Mathematics',
-    level: 'High School',
-    credits: 3,
-    isActive: true,
-    createdAt: '2024-08-15T00:00:00Z',
-    updatedAt: '2024-11-01T00:00:00Z'
-  },
-  {
-    id: 'subject_2',
-    name: 'Physics Fundamentals',
-    code: 'PHYS101',
-    description: 'Introduction to physics concepts and principles',
-    department: 'Science',
-    level: 'Foundation',
-    credits: 2,
-    isActive: true,
-    createdAt: '2024-08-15T00:00:00Z',
-    updatedAt: '2024-10-15T00:00:00Z'
-  },
-  {
-    id: 'subject_3',
-    name: 'English Literature',
-    code: 'ENG201',
-    description: 'Study of literary works and critical analysis',
-    department: 'English',
-    level: 'Middle School',
-    credits: 2,
-    isActive: true,
-    createdAt: '2024-08-15T00:00:00Z',
-    updatedAt: '2024-09-20T00:00:00Z'
-  },
-  {
-    id: 'subject_4',
-    name: 'Computer Science Basics',
-    code: 'CS101',
-    description: 'Introduction to programming and computer science concepts',
-    department: 'Computer Science',
-    level: 'Foundation',
-    credits: 3,
-    isActive: true,
-    createdAt: '2024-08-15T00:00:00Z',
-    updatedAt: '2024-10-30T00:00:00Z'
-  }
-]
 
 // Helper function to verify JWT token
 function verifyToken(request: NextRequest) {
@@ -102,6 +37,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Connect to database
+    await connectDB()
+
     const { searchParams } = new URL(request.url)
     
     // Parse query parameters
@@ -115,40 +53,82 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'name'
     const sortOrder = searchParams.get('sortOrder') || 'asc'
 
-    // Filter subjects
-    let filteredSubjects = [...MOCK_SUBJECTS]
+    // Build MongoDB query
+    let query: any = {}
+
+    // Add school filter for multi-tenant support
+    const schoolId = (user as any).schoolId || new mongoose.Types.ObjectId()
+    query.schoolId = schoolId
 
     if (search) {
-      const searchLower = search.toLowerCase()
-      filteredSubjects = filteredSubjects.filter(subject =>
-        subject.name.toLowerCase().includes(searchLower) ||
-        subject.code.toLowerCase().includes(searchLower) ||
-        subject.description?.toLowerCase().includes(searchLower)
-      )
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { code: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ]
     }
 
     if (department) {
-      filteredSubjects = filteredSubjects.filter(subject => subject.department === department)
+      query.department = department
     }
 
     if (level) {
-      filteredSubjects = filteredSubjects.filter(subject => subject.level === level)
+      query.level = level
     }
 
     if (isActive !== null && isActive !== '') {
-      const activeStatus = isActive === 'true'
-      filteredSubjects = filteredSubjects.filter(subject => subject.isActive === activeStatus)
+      query.isActive = isActive === 'true'
     }
 
     if (credits) {
-      const creditValue = parseInt(credits)
-      filteredSubjects = filteredSubjects.filter(subject => subject.credits === creditValue)
+      query.credits = parseInt(credits)
     }
 
-    // Sort subjects
-    filteredSubjects.sort((a, b) => {
-      let aVal: string | number = ''
-      let bVal: string | number = ''
+    // Build sort object
+    const sortObj: any = {}
+    switch (sortBy) {
+      case 'name':
+        sortObj.name = sortOrder === 'desc' ? -1 : 1
+        break
+      case 'code':
+        sortObj.code = sortOrder === 'desc' ? -1 : 1
+        break
+      case 'department':
+        sortObj.department = sortOrder === 'desc' ? -1 : 1
+        break
+      case 'level':
+        sortObj.level = sortOrder === 'desc' ? -1 : 1
+        break
+      case 'credits':
+        sortObj.credits = sortOrder === 'desc' ? -1 : 1
+        break
+      default:
+        sortObj.name = 1
+    }
+
+    // Execute query with pagination
+    const [subjects, total] = await Promise.all([
+      SubjectModel.find(query)
+        .sort(sortObj)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      SubjectModel.countDocuments(query)
+    ])
+
+    const pages = Math.ceil(total / limit)
+
+    return NextResponse.json({
+      success: true,
+      data: subjects,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages
+      },
+      message: 'Subjects retrieved successfully'
+    })
       
       switch (sortBy) {
         case 'name':

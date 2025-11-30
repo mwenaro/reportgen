@@ -1,145 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-
-// Import the same Teacher interface and mock data
-interface Teacher {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-  phone?: string
-  address?: string
-  dateOfBirth?: string
-  gender?: 'male' | 'female' | 'other'
-  
-  // Professional Information
-  employeeId?: string
-  qualification?: string
-  experience?: string
-  specialization?: string
-  subjects?: string[]
-  
-  // Employment Details
-  joiningDate?: string
-  contractType?: 'permanent' | 'contract' | 'part-time'
-  status: 'active' | 'inactive' | 'on-leave'
-  department?: string
-  position?: string
-  
-  // Contact Information
-  emergencyContact?: {
-    name?: string
-    relationship?: string
-    phone?: string
-  }
-  
-  // Professional Development
-  certifications?: string[]
-  trainings?: Array<{
-    title?: string
-    provider?: string
-    completionDate?: string
-  }>
-  
-  // Performance & Compensation
-  performanceRating?: number
-  lastReviewDate?: string
-  salary?: number
-  benefits?: string[]
-  
-  // System fields
-  createdAt: string
-  updatedAt: string
-}
+import { connectDB } from '@/lib/db'
+import TeacherModel from '@/lib/models/teacher.model'
+import mongoose from 'mongoose'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key'
-
-// This would be shared/imported in a real app
-let MOCK_TEACHERS: Teacher[] = [
-  {
-    id: 'teacher_1',
-    firstName: 'Sarah',
-    lastName: 'Johnson',
-    email: 'sarah.johnson@school.edu',
-    phone: '+1-555-0101',
-    address: '123 Education St, Learning City, LC 12345',
-    dateOfBirth: '1985-03-15',
-    gender: 'female',
-    employeeId: 'EMP001',
-    qualification: 'Master of Education (Mathematics)',
-    experience: '8 years',
-    specialization: 'Advanced Mathematics',
-    subjects: ['mathematics', 'algebra', 'geometry'],
-    joiningDate: '2020-08-15',
-    contractType: 'permanent',
-    status: 'active',
-    department: 'Mathematics',
-    position: 'Senior Mathematics Teacher',
-    emergencyContact: {
-      name: 'Michael Johnson',
-      relationship: 'Spouse',
-      phone: '+1-555-0102'
-    },
-    certifications: ['TSC Registration', 'Mathematics Education Certificate'],
-    trainings: [
-      {
-        title: 'Modern Teaching Methods',
-        provider: 'Educational Institute',
-        completionDate: '2023-06-15'
-      }
-    ],
-    performanceRating: 4.5,
-    lastReviewDate: '2024-01-15',
-    salary: 65000,
-    benefits: ['Health Insurance', 'Pension Plan', 'Professional Development Fund'],
-    createdAt: '2020-08-15T00:00:00Z',
-    updatedAt: '2024-01-15T00:00:00Z'
-  },
-  {
-    id: 'teacher_2',
-    firstName: 'David',
-    lastName: 'Williams',
-    email: 'david.williams@school.edu',
-    phone: '+1-555-0201',
-    address: '456 Teaching Ave, Education Town, ET 67890',
-    dateOfBirth: '1979-11-22',
-    gender: 'male',
-    employeeId: 'EMP002',
-    qualification: 'Bachelor of Science (Physics)',
-    experience: '12 years',
-    specialization: 'Physics and Chemistry',
-    subjects: ['physics', 'chemistry'],
-    joiningDate: '2018-01-20',
-    contractType: 'permanent',
-    status: 'active',
-    department: 'Science',
-    position: 'Head of Science Department',
-    emergencyContact: {
-      name: 'Emma Williams',
-      relationship: 'Spouse',
-      phone: '+1-555-0202'
-    },
-    certifications: ['TSC Registration', 'Science Education Certificate', 'Laboratory Safety Certificate'],
-    trainings: [
-      {
-        title: 'Laboratory Management',
-        provider: 'Science Education Council',
-        completionDate: '2023-09-10'
-      },
-      {
-        title: 'STEM Integration',
-        provider: 'Educational Technology Institute',
-        completionDate: '2024-02-20'
-      }
-    ],
-    performanceRating: 4.8,
-    lastReviewDate: '2024-02-01',
-    salary: 72000,
-    benefits: ['Health Insurance', 'Pension Plan', 'Leadership Allowance'],
-    createdAt: '2018-01-20T00:00:00Z',
-    updatedAt: '2024-02-01T00:00:00Z'
-  }
-]
 
 // Helper function to verify JWT token
 function verifyToken(request: NextRequest) {
@@ -175,8 +40,35 @@ export async function GET(
       )
     }
 
+    // Connect to database
+    await connectDB()
+
     const { id } = params
-    const teacher = MOCK_TEACHERS.find(t => t.id === id)
+
+    // Validate MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Invalid teacher ID',
+          errors: { teacher: ['Please provide a valid teacher ID'] }
+        },
+        { status: 400 }
+      )
+    }
+
+    // Get school ID from user for multi-tenant support
+    const schoolId = (user as any).schoolId || new mongoose.Types.ObjectId()
+
+    const teacher = await TeacherModel.findOne({ 
+      _id: id,
+      schoolId,
+      isDeleted: false 
+    })
+    .populate('subjectAssignments.subjectId', 'name code department')
+    .populate('classAssignments.classId', 'name level section')
+    .select('-documents -notes') // Exclude sensitive fields
+    .lean()
 
     if (!teacher) {
       return NextResponse.json(
@@ -227,10 +119,35 @@ export async function PUT(
       )
     }
 
-    const { id } = params
-    const teacherIndex = MOCK_TEACHERS.findIndex(t => t.id === id)
+    // Connect to database
+    await connectDB()
 
-    if (teacherIndex === -1) {
+    const { id } = params
+
+    // Validate MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Invalid teacher ID',
+          errors: { teacher: ['Please provide a valid teacher ID'] }
+        },
+        { status: 400 }
+      )
+    }
+
+    // Get school ID from user for multi-tenant support
+    const schoolId = (user as any).schoolId || new mongoose.Types.ObjectId()
+    const userId = (user as any).id || (user as any)._id
+
+    // Check if teacher exists
+    const existingTeacher = await TeacherModel.findOne({ 
+      _id: id,
+      schoolId,
+      isDeleted: false 
+    })
+
+    if (!existingTeacher) {
       return NextResponse.json(
         { 
           success: false, 
@@ -242,7 +159,6 @@ export async function PUT(
     }
 
     const updateData = await request.json()
-    const currentTeacher = MOCK_TEACHERS[teacherIndex]
 
     // Validate required fields
     const errors: Record<string, string[]> = {}
@@ -263,10 +179,13 @@ export async function PUT(
         if (!emailRegex.test(updateData.email)) {
           errors.email = ['Please enter a valid email address']
         } else {
-          const existingTeacher = MOCK_TEACHERS.find(t => 
-            t.id !== id && t.email.toLowerCase() === updateData.email.toLowerCase()
-          )
-          if (existingTeacher) {
+          // Check for duplicate email (excluding current teacher)
+          const existingEmailTeacher = await TeacherModel.findOne({
+            email: updateData.email.toLowerCase(),
+            _id: { $ne: id },
+            isDeleted: false
+          })
+          if (existingEmailTeacher) {
             errors.email = ['This email is already in use']
           }
         }
@@ -274,10 +193,14 @@ export async function PUT(
     }
 
     if (updateData.employeeId !== undefined && updateData.employeeId) {
-      const existingTeacher = MOCK_TEACHERS.find(t => 
-        t.id !== id && t.employeeId === updateData.employeeId
-      )
-      if (existingTeacher) {
+      // Check for duplicate employee number in same school (excluding current teacher)
+      const existingEmployeeTeacher = await TeacherModel.findOne({
+        schoolId,
+        employeeNumber: updateData.employeeId.toUpperCase(),
+        _id: { $ne: id },
+        isDeleted: false
+      })
+      if (existingEmployeeTeacher) {
         errors.employeeId = ['This employee ID is already in use']
       }
     }
@@ -293,15 +216,59 @@ export async function PUT(
       )
     }
 
-    // Update teacher
-    const updatedTeacher: Teacher = {
-      ...currentTeacher,
-      ...updateData,
-      id, // Ensure ID doesn't change
-      updatedAt: new Date().toISOString()
+    // Prepare update data for MongoDB
+    const mongoUpdateData: any = {
+      updatedBy: new mongoose.Types.ObjectId(userId)
     }
 
-    MOCK_TEACHERS[teacherIndex] = updatedTeacher
+    // Map fields to MongoDB schema
+    if (updateData.firstName) mongoUpdateData.firstName = updateData.firstName.trim()
+    if (updateData.lastName) mongoUpdateData.lastName = updateData.lastName.trim()
+    if (updateData.email) mongoUpdateData.email = updateData.email.trim().toLowerCase()
+    if (updateData.phone) mongoUpdateData.phone = updateData.phone.trim()
+    if (updateData.dateOfBirth) mongoUpdateData.dateOfBirth = new Date(updateData.dateOfBirth)
+    if (updateData.gender) mongoUpdateData.gender = updateData.gender
+    if (updateData.employeeId) mongoUpdateData.employeeNumber = updateData.employeeId.trim().toUpperCase()
+    if (updateData.department) mongoUpdateData.department = updateData.department.trim()
+    if (updateData.status) mongoUpdateData.status = updateData.status
+
+    // Update address if provided
+    if (updateData.address) {
+      mongoUpdateData.address = {
+        street: updateData.address,
+        city: 'Unknown',
+        state: 'Unknown',
+        country: 'Kenya',
+        postalCode: '00000'
+      }
+    }
+
+    // Update emergency contact if provided
+    if (updateData.emergencyContact) {
+      mongoUpdateData.emergencyContact = updateData.emergencyContact
+    }
+
+    // Update qualifications if provided
+    if (updateData.qualification) {
+      mongoUpdateData.qualifications = [{
+        degree: 'other' as const,
+        field: updateData.qualification,
+        institution: 'Unknown',
+        yearCompleted: new Date().getFullYear(),
+        verified: false
+      }]
+    }
+
+    // Update teacher
+    const updatedTeacher = await TeacherModel.findByIdAndUpdate(
+      id,
+      mongoUpdateData,
+      { new: true, runValidators: true }
+    )
+    .select('-salary -documents -notes -performanceRecords')
+    .populate('subjectAssignments.subjectId', 'name code')
+    .populate('classAssignments.classId', 'name level')
+    .lean()
 
     return NextResponse.json({
       success: true,
@@ -322,7 +289,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/teachers/[id] - Delete teacher
+// DELETE /api/teachers/[id] - Delete teacher (soft delete)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -341,10 +308,35 @@ export async function DELETE(
       )
     }
 
-    const { id } = params
-    const teacherIndex = MOCK_TEACHERS.findIndex(t => t.id === id)
+    // Connect to database
+    await connectDB()
 
-    if (teacherIndex === -1) {
+    const { id } = params
+
+    // Validate MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Invalid teacher ID',
+          errors: { teacher: ['Please provide a valid teacher ID'] }
+        },
+        { status: 400 }
+      )
+    }
+
+    // Get school ID from user for multi-tenant support
+    const schoolId = (user as any).schoolId || new mongoose.Types.ObjectId()
+    const userId = (user as any).id || (user as any)._id
+
+    // Check if teacher exists
+    const existingTeacher = await TeacherModel.findOne({ 
+      _id: id,
+      schoolId,
+      isDeleted: false 
+    })
+
+    if (!existingTeacher) {
       return NextResponse.json(
         { 
           success: false, 
@@ -355,8 +347,19 @@ export async function DELETE(
       )
     }
 
-    // Remove teacher
-    const deletedTeacher = MOCK_TEACHERS.splice(teacherIndex, 1)[0]
+    // Soft delete teacher
+    const deletedTeacher = await TeacherModel.findByIdAndUpdate(
+      id,
+      {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: new mongoose.Types.ObjectId(userId),
+        status: 'inactive'
+      },
+      { new: true }
+    )
+    .select('-salary -documents -notes -performanceRecords')
+    .lean()
 
     return NextResponse.json({
       success: true,

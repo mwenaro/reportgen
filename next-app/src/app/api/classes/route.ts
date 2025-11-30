@@ -1,54 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-
-// Types
-interface Class {
-  id: string
-  name: string
-  level: string
-  section: string
-  academicYear: string
-  
-  // Teacher Assignment
-  classTeacher?: string
-  classTeacherName?: string
-  subjectTeachers?: Array<{
-    teacherId: string
-    teacherName: string
-    subjectId: string
-    subjectName: string
-  }>
-  
-  // Enrollment & Capacity
-  currentEnrollment: number
-  maxCapacity: number
-  
-  // Schedule & Subjects
-  subjects?: string[]
-  schedule?: Array<{
-    day: string
-    periods: Array<{
-      time: string
-      subject: string
-      teacher: string
-    }>
-  }>
-  
-  // Class Details
-  classroom?: string
-  description?: string
-  isActive: boolean
-  
-  // System fields
-  createdAt: string
-  updatedAt: string
-}
+import { connectDB } from '@/lib/db'
+import ClassModel from '@/lib/models/class.model'
+import mongoose from 'mongoose'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key'
-
-// Mock data - replace with actual database
-let MOCK_CLASSES: Class[] = [
-  {
     id: 'class_1',
     name: 'Grade 10A',
     level: 'Grade 10',

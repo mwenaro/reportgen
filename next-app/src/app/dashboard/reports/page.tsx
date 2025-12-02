@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useStudentReportGenerator, generateSampleStudentData } from '@/lib/hooks/useStudentReportGenerator'
+import { StudentData } from '@/lib/report-generator/StudentReportGenerator'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -261,6 +263,26 @@ export default function ReportsPage() {
     downloadCount: 0
   })
 
+  // PDF Report Generator
+  const {
+    generateStudentReport,
+    previewReport,
+    isGenerating,
+    generatedReports
+  } = useStudentReportGenerator({
+    onSuccess: (filename) => {
+      console.log('Report generated successfully:', filename)
+      // You could show a success toast here
+    },
+    onError: (error) => {
+      console.error('Error generating report:', error)
+      alert('Error generating report: ' + error.message)
+    }
+  })
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false)
+
   // Update URL parameters
   const updateSearchParams = (updates: Record<string, string | null>) => {
     const current = new URLSearchParams(Array.from(searchParams.entries()))
@@ -361,12 +383,19 @@ export default function ReportsPage() {
     
   }, [reports, searchTerm, typeFilter, statusFilter, termFilter, formatFilter, sortBy, sortOrder, page, pageSize])
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
     if (!formData.title || !formData.type || !formData.teacher) {
       alert('Please fill in all required fields')
       return
     }
 
+    // If it's a student terminal report, generate actual PDF
+    if (formData.type === 'student_terminal') {
+      await handleGenerateStudentReport()
+      return
+    }
+
+    // For other report types, create placeholder entry
     const newReport: AssessmentReport = {
       id: Date.now().toString(),
       title: formData.title!,
@@ -399,6 +428,108 @@ export default function ReportsPage() {
 
   const handleDeleteReport = (reportId: string) => {
     setReports(reports.filter(r => r.id !== reportId))
+  }
+
+  const handleGenerateStudentReport = async () => {
+    try {
+      // Generate sample student data - in real app, this would come from your database
+      const studentData = generateSampleStudentData({
+        name: formData.student || 'John Doe',
+        form: formData.class?.charAt(formData.class.length - 2) || '1',
+        class: formData.class || '1A',
+        term: formData.term?.replace('Term ', '') || '1',
+        year: formData.academicYear || '2024-2025'
+      })
+
+      const result = await generateStudentReport(studentData)
+      
+      if (result.success) {
+        // Add to reports list
+        const newReport: AssessmentReport = {
+          id: Date.now().toString(),
+          title: `${studentData.name} - Individual Terminal Report`,
+          type: 'student_terminal',
+          description: `Complete academic performance report for ${studentData.name}`,
+          term: formData.term as any,
+          academicYear: formData.academicYear!,
+          class: studentData.class,
+          student: studentData.name,
+          teacher: formData.teacher!,
+          avgScore: studentData.meanPoints * 8.33, // Convert points to percentage approximation
+          generatedDate: new Date().toISOString().split('T')[0],
+          status: 'generated',
+          format: 'pdf',
+          fileSize: '1.8 MB',
+          downloadCount: 1,
+          createdBy: formData.teacher!,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+
+        setReports([newReport, ...reports])
+        setIsGenerateDialogOpen(false)
+        resetForm()
+      }
+    } catch (error) {
+      console.error('Error generating student report:', error)
+      alert('Failed to generate report. Please try again.')
+    }
+  }
+
+  const handlePreviewReport = async (reportId: string) => {
+    const report = reports.find(r => r.id === reportId)
+    if (report && report.type === 'student_terminal') {
+      try {
+        // Generate sample data for preview
+        const studentData = generateSampleStudentData({
+          name: report.student || 'Sample Student',
+          form: report.class?.charAt(report.class.length - 2) || '1',
+          class: report.class || '1A',
+          term: report.term.replace('Term ', '') || '1',
+          year: report.academicYear
+        })
+
+        const url = await previewReport(studentData)
+        if (url) {
+          setPreviewUrl(url)
+          setIsPreviewDialogOpen(true)
+        }
+      } catch (error) {
+        console.error('Error generating preview:', error)
+        alert('Failed to generate preview. Please try again.')
+      }
+    }
+  }
+
+  const handleDownloadReport = async (reportId: string) => {
+    const report = reports.find(r => r.id === reportId)
+    if (report && report.type === 'student_terminal') {
+      try {
+        // Generate sample data for download
+        const studentData = generateSampleStudentData({
+          name: report.student || 'Sample Student',
+          form: report.class?.charAt(report.class.length - 2) || '1',
+          class: report.class || '1A',
+          term: report.term.replace('Term ', '') || '1',
+          year: report.academicYear
+        })
+
+        await generateStudentReport(studentData)
+        
+        // Update download count
+        setReports(reports.map(r => 
+          r.id === reportId 
+            ? { ...r, downloadCount: r.downloadCount + 1 }
+            : r
+        ))
+      } catch (error) {
+        console.error('Error downloading report:', error)
+        alert('Failed to download report. Please try again.')
+      }
+    } else {
+      // For non-student reports, show placeholder message
+      alert('Download functionality for this report type is not yet implemented.')
+    }
   }
 
   const resetForm = () => {
@@ -620,7 +751,9 @@ export default function ReportsPage() {
                 <Button variant="outline" onClick={() => {setIsGenerateDialogOpen(false); resetForm()}}>
                   Cancel
                 </Button>
-                <Button onClick={handleGenerateReport}>Generate Report</Button>
+                <Button onClick={handleGenerateReport} disabled={isGenerating}>
+                  {isGenerating ? 'Generating...' : 'Generate Report'}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -863,7 +996,17 @@ export default function ReportsPage() {
                       <div className="flex items-center justify-end space-x-2">
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="ghost" size="sm" onClick={() => setViewingReport(report)}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => {
+                                if (report.type === 'student_terminal') {
+                                  handlePreviewReport(report.id)
+                                } else {
+                                  setViewingReport(report)
+                                }
+                              }}
+                            >
                               <Eye className="h-4 w-4" />
                             </Button>
                           </DialogTrigger>
@@ -951,7 +1094,12 @@ export default function ReportsPage() {
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDownloadReport(report.id)}
+                          disabled={isGenerating}
+                        >
                           <Download className="h-4 w-4 text-blue-500" />
                         </Button>
                         <AlertDialog>
@@ -1067,6 +1215,45 @@ export default function ReportsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* PDF Preview Dialog */}
+      <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Report Preview</DialogTitle>
+            <DialogDescription>
+              Preview of the generated student terminal report
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 min-h-[70vh]">
+            {previewUrl ? (
+              <iframe
+                src={previewUrl}
+                className="w-full h-full border-0"
+                title="Report Preview"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Loading preview...</p>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsPreviewDialogOpen(false)
+              if (previewUrl) {
+                URL.revokeObjectURL(previewUrl)
+                setPreviewUrl(null)
+              }
+            }}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

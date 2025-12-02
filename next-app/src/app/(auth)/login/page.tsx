@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -30,8 +31,11 @@ export default function LoginPage() {
     e.preventDefault()
     try {
       await login(formData.email, formData.password)
-      // If successful, redirect will be handled by the useEffect above
+      console.log('Login successful, redirecting to dashboard...')
+      // Explicit redirect after successful login
+      router.push('/dashboard')
     } catch (error) {
+      console.error('Login failed:', error)
       // Error is handled by the auth store
     }
   }
@@ -44,11 +48,15 @@ export default function LoginPage() {
   }
 
   // Demo login function for testing
-  const handleDemoLogin = () => {
-    setFormData({
-      email: 'admin@school.edu',
-      password: 'password123'
-    })
+  const handleDemoLogin = async () => {
+    try {
+      await login('admin@school.edu', 'password123')
+      console.log('Demo login successful, redirecting to dashboard...')
+      router.push('/dashboard')
+    } catch (error) {
+      console.error('Demo login failed:', error)
+      // Error is handled by the auth store
+    }
   }
 
   return (
@@ -161,6 +169,15 @@ export default function LoginPage() {
               
               <p className="text-xs text-gray-500 mt-2 text-center">
                 Demo: admin@school.edu / password123
+              </p>
+            </div>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
+                  Sign up here
+                </Link>
               </p>
             </div>
           </CardContent>

@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "zustand": "^5.0.9"
+  },
+  "devDependencies": {
+    "baseline-browser-mapping": "^2.8.32"
   }
 }

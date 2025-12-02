@@ -3,13 +3,14 @@ import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  // return NextResponse.next() //for testing only
   
   // Get token from cookies or local storage (since we can't access localStorage in middleware)
   const token = request.cookies.get('auth-token')?.value || 
                 request.headers.get('Authorization')?.replace('Bearer ', '')
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/', '/login']
+  const publicRoutes = ['/', '/login', '/signup']
   
   // API routes that don't require authentication
   const publicApiRoutes = ['/api/auth/login', '/api/health']

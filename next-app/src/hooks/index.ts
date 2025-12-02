@@ -2,26 +2,37 @@
 import { useEffect, useState } from 'react'
 import { useTenant as useTenantContext } from '@/lib/tenant-context'
 
-// Authentication hook placeholder
+// Authentication hook that wraps the Zustand auth store
 export function useAuth() {
-  const [user, setUser] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
-  
-  // Implementation will be added in Prompt 5
-  useEffect(() => {
-    // Placeholder for auth logic
-    setIsLoading(false)
-  }, [])
+  // Import the auth store statically - Zustand persist handles SSR properly
+  const { 
+    user, 
+    isLoading, 
+    isAuthenticated, 
+    error, 
+    login, 
+    logout, 
+    clearError 
+  } = require('@/lib/stores/auth').useAuthStore()
   
   return {
     user,
     isLoading,
-    login: async (credentials: any) => {
-      // Implementation will be added later
+    isAuthenticated,
+    error,
+    login: async (email: string, password: string) => {
+      try {
+        await login(email, password)
+        return { success: true }
+      } catch (error) {
+        throw error
+      }
     },
     logout: async () => {
-      // Implementation will be added later
-    }
+      logout()
+      return { success: true }
+    },
+    clearError
   }
 }
 

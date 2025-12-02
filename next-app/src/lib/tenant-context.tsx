@@ -2,14 +2,14 @@
 
 // Tenant Context Provider for React components
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { TenantInfo, TenantContext } from './tenant-resolver'
+import { TenantInfo, TenantContext as TenantContextType } from './tenant-resolver'
 
 interface TenantProviderProps {
   children: ReactNode
   initialTenant?: TenantInfo | null
 }
 
-interface TenantContextValue extends TenantContext {
+interface TenantContextValue extends TenantContextType {
   switchTenant: (tenantId: string) => Promise<void>
   refreshTenant: () => Promise<void>
   hasFeature: (feature: string) => boolean
@@ -24,7 +24,7 @@ const TenantContextDefault: TenantContextValue = {
   hasFeature: () => false
 }
 
-const TenantContext = createContext<TenantContextValue>(TenantContextDefault)
+const TenantReactContext = createContext<TenantContextValue>(TenantContextDefault)
 
 export function TenantProvider({ children, initialTenant = null }: TenantProviderProps) {
   const [tenant, setTenant] = useState<TenantInfo | null>(initialTenant)
@@ -127,14 +127,14 @@ export function TenantProvider({ children, initialTenant = null }: TenantProvide
   }
 
   return (
-    <TenantContext.Provider value={value}>
+    <TenantReactContext.Provider value={value}>
       {children}
-    </TenantContext.Provider>
+    </TenantReactContext.Provider>
   )
 }
 
 export function useTenant(): TenantContextValue {
-  const context = useContext(TenantContext)
+  const context = useContext(TenantReactContext)
   
   if (context === undefined) {
     throw new Error('useTenant must be used within a TenantProvider')

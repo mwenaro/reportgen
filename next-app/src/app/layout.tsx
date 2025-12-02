@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ErrorBoundary from '@/components/error-boundary';
 import { ClientErrorSetup } from '@/components/client-error-setup';
+import { LoadingProvider } from '@/contexts/LoadingContext';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,8 +43,10 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased">
         <ErrorBoundary>
-          <ClientErrorSetup />
-          {children}
+          <LoadingProvider>
+            <ClientErrorSetup />
+            {children}
+          </LoadingProvider>
         </ErrorBoundary>
       </body>
     </html>

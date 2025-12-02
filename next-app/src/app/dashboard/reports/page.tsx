@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useStudentReportGenerator, generateSampleStudentData, generateVariedSampleData } from '@/lib/hooks/useStudentReportGenerator'
 import { StudentData } from '@/lib/report-generator/StudentReportGenerator'
+import LoadingSpinner, { ButtonSpinner } from '@/components/ui/loading-spinner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -708,7 +709,11 @@ export default function ReportsPage() {
             onClick={handleDownloadSampleReport}
             disabled={isGenerating}
           >
-            <FileText className="mr-2 h-4 w-4" />
+            {isGenerating ? (
+              <ButtonSpinner size="sm" className="mr-2" />
+            ) : (
+              <FileText className="mr-2 h-4 w-4" />
+            )}
             {isGenerating ? 'Generating...' : 'Sample Report'}
           </Button>
           <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
@@ -896,6 +901,7 @@ export default function ReportsPage() {
                   Cancel
                 </Button>
                 <Button onClick={handleGenerateReport} disabled={isGenerating}>
+                  {isGenerating && <ButtonSpinner size="sm" className="mr-2" />}
                   {isGenerating ? 'Generating...' : 
                     formData.type === 'student_terminal' && formData.reportScope === 'class' ? 
                       'Generate Class Reports' : 'Generate Report'}

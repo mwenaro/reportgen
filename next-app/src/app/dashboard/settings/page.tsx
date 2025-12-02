@@ -35,6 +35,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Separator } from '@/components/ui/separator'
+import LoadingSpinner, { ButtonSpinner } from '@/components/ui/loading-spinner'
 import {
   School,
   Calendar,
@@ -138,6 +139,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('school')
   const [isEditing, setIsEditing] = useState(false)
   const [showPasswords, setShowPasswords] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   const [schoolSettings, setSchoolSettings] = useState<SchoolSettings>({
     name: 'Tsagwa Secondary School',
@@ -208,10 +210,16 @@ export default function SettingsPage() {
     auditLogs: true
   })
 
-  const handleSaveSettings = (section: string) => {
-    // In real app, this would save to database
-    console.log(`Saving ${section} settings`)
-    setIsEditing(false)
+  const handleSaveSettings = async (section: string) => {
+    setIsSaving(true)
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      console.log(`Saving ${section} settings`)
+      setIsEditing(false)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const tabs = [
@@ -416,9 +424,9 @@ export default function SettingsPage() {
                   <Button variant="outline" onClick={() => setIsEditing(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={() => handleSaveSettings('school')}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
+                  <Button onClick={() => handleSaveSettings('school')} disabled={isSaving}>
+                    {isSaving ? <ButtonSpinner size="sm" className="mr-2" /> : <Save className="mr-2 h-4 w-4" />}
+                    {isSaving ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               )}
@@ -621,9 +629,9 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={() => handleSaveSettings('academic')}>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Academic Settings
+                <Button onClick={() => handleSaveSettings('academic')} disabled={isSaving}>
+                  {isSaving ? <ButtonSpinner size="sm" className="mr-2" /> : <Save className="mr-2 h-4 w-4" />}
+                  {isSaving ? 'Saving...' : 'Save Academic Settings'}
                 </Button>
               </div>
             </CardContent>
@@ -775,9 +783,9 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={() => handleSaveSettings('system')}>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save System Settings
+                <Button onClick={() => handleSaveSettings('system')} disabled={isSaving}>
+                  {isSaving ? <ButtonSpinner size="sm" className="mr-2" /> : <Save className="mr-2 h-4 w-4" />}
+                  {isSaving ? 'Saving...' : 'Save System Settings'}
                 </Button>
               </div>
             </CardContent>
@@ -886,9 +894,9 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={() => handleSaveSettings('security')}>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Security Settings
+                <Button onClick={() => handleSaveSettings('security')} disabled={isSaving}>
+                  {isSaving ? <ButtonSpinner size="sm" className="mr-2" /> : <Save className="mr-2 h-4 w-4" />}
+                  {isSaving ? 'Saving...' : 'Save Security Settings'}
                 </Button>
               </div>
             </CardContent>

@@ -239,70 +239,160 @@ export default function ReportsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  // Mock system data - in real app, this would come from your database
+  // Mock system data - configured for Kenyan education systems (8-4-4 and CBE/CBC)
   const systemData = {
-    academicYears: ['2024-2025', '2023-2024', '2022-2023'],
+    academicYears: ['2025', '2024', '2023', '2022'],
+    educationSystems: ['8-4-4 System', 'CBE/CBC System'],
     teachers: [
-      { id: '1', name: 'Sarah Johnson', subjects: ['Mathematics', 'Statistics'] },
-      { id: '2', name: 'Michael Chen', subjects: ['English Language', 'Literature'] },
-      { id: '3', name: 'Emily Davis', subjects: ['Biology', 'Chemistry'] },
-      { id: '4', name: 'Dr. Robert Wilson', subjects: ['Physics', 'Mathematics'] },
-      { id: '5', name: 'Dr. Lisa Anderson', subjects: ['Physics', 'Chemistry'] },
-      { id: '6', name: 'John Smith', subjects: ['History', 'Geography'] },
-      { id: '7', name: 'Mary Wanjiku', subjects: ['Kiswahili', 'CRE'] },
-      { id: '8', name: 'David Kimani', subjects: ['Business Studies', 'Economics'] }
+      { id: '1', name: 'Sarah Wanjiku', subjects: ['Mathematics', 'Statistics'], system: '8-4-4' },
+      { id: '2', name: 'Michael Ochieng', subjects: ['English Language', 'Literature'], system: '8-4-4' },
+      { id: '3', name: 'Grace Muthoni', subjects: ['Biology', 'Chemistry'], system: '8-4-4' },
+      { id: '4', name: 'Dr. Robert Kiprotich', subjects: ['Physics', 'Mathematics'], system: '8-4-4' },
+      { id: '5', name: 'Dr. Mary Njeri', subjects: ['Physics', 'Chemistry'], system: '8-4-4' },
+      { id: '6', name: 'John Kamau', subjects: ['History & Government', 'Geography'], system: '8-4-4' },
+      { id: '7', name: 'Esther Waweru', subjects: ['Kiswahili', 'CRE'], system: '8-4-4' },
+      { id: '8', name: 'David Mutua', subjects: ['Business Studies', 'Economics'], system: '8-4-4' },
+      { id: '9', name: 'Lucy Akinyi', subjects: ['Integrated Science', 'Mathematics'], system: 'CBC' },
+      { id: '10', name: 'Peter Mwangi', subjects: ['Social Studies', 'English'], system: 'CBC' },
+      { id: '11', name: 'Faith Chebet', subjects: ['Kiswahili', 'Life Skills'], system: 'CBC' }
     ],
     classes: [
-      { id: '1', name: 'Form 1A', level: 'Form 1', students: 42 },
-      { id: '2', name: 'Form 1B', level: 'Form 1', students: 40 },
-      { id: '3', name: 'Form 1C', level: 'Form 1', students: 38 },
-      { id: '4', name: 'Form 2A', level: 'Form 2', students: 44 },
-      { id: '5', name: 'Form 2B', level: 'Form 2', students: 42 },
-      { id: '6', name: 'Form 2C', level: 'Form 2', students: 41 },
-      { id: '7', name: 'Form 3A', level: 'Form 3', students: 38 },
-      { id: '8', name: 'Form 3B', level: 'Form 3', students: 36 },
-      { id: '9', name: 'Form 4A', level: 'Form 4', students: 35 },
-      { id: '10', name: 'Form 4B', level: 'Form 4', students: 33 }
+      // CBC System Classes
+      { id: '1', name: 'PP1 Red', level: 'Pre-Primary 1', students: 25, system: 'CBC' },
+      { id: '2', name: 'PP2 Blue', level: 'Pre-Primary 2', students: 28, system: 'CBC' },
+      { id: '3', name: 'Grade 1A', level: 'Grade 1', students: 30, system: 'CBC' },
+      { id: '4', name: 'Grade 2A', level: 'Grade 2', students: 32, system: 'CBC' },
+      { id: '5', name: 'Grade 3A', level: 'Grade 3', students: 35, system: 'CBC' },
+      { id: '6', name: 'Grade 4A', level: 'Grade 4', students: 38, system: 'CBC' },
+      { id: '7', name: 'Grade 5A', level: 'Grade 5', students: 40, system: 'CBC' },
+      { id: '8', name: 'Grade 6A', level: 'Grade 6', students: 42, system: 'CBC' },
+      { id: '9', name: 'Grade 7A', level: 'Grade 7', students: 45, system: 'CBC' },
+      { id: '10', name: 'Grade 8A', level: 'Grade 8', students: 43, system: 'CBC' },
+      { id: '11', name: 'Grade 9A', level: 'Grade 9', students: 41, system: 'CBC' },
+      
+      // 8-4-4 System Classes (Traditional Secondary)
+      { id: '12', name: 'Form 1A', level: 'Form 1', students: 42, system: '8-4-4' },
+      { id: '13', name: 'Form 1B', level: 'Form 1', students: 40, system: '8-4-4' },
+      { id: '14', name: 'Form 1C', level: 'Form 1', students: 38, system: '8-4-4' },
+      { id: '15', name: 'Form 2A', level: 'Form 2', students: 44, system: '8-4-4' },
+      { id: '16', name: 'Form 2B', level: 'Form 2', students: 42, system: '8-4-4' },
+      { id: '17', name: 'Form 2C', level: 'Form 2', students: 41, system: '8-4-4' },
+      { id: '18', name: 'Form 3A', level: 'Form 3', students: 38, system: '8-4-4' },
+      { id: '19', name: 'Form 3B', level: 'Form 3', students: 36, system: '8-4-4' },
+      { id: '20', name: 'Form 4A', level: 'Form 4', students: 35, system: '8-4-4' },
+      { id: '21', name: 'Form 4B', level: 'Form 4', students: 33, system: '8-4-4' }
     ],
     subjects: [
-      { id: '1', name: 'Mathematics', code: 'MAT', department: 'Sciences' },
-      { id: '2', name: 'English Language', code: 'ENG', department: 'Languages' },
-      { id: '3', name: 'Kiswahili', code: 'KIS', department: 'Languages' },
-      { id: '4', name: 'Biology', code: 'BIO', department: 'Sciences' },
-      { id: '5', name: 'Chemistry', code: 'CHE', department: 'Sciences' },
-      { id: '6', name: 'Physics', code: 'PHY', department: 'Sciences' },
-      { id: '7', name: 'History', code: 'HIS', department: 'Humanities' },
-      { id: '8', name: 'Geography', code: 'GEO', department: 'Humanities' },
-      { id: '9', name: 'CRE', code: 'CRE', department: 'Humanities' },
-      { id: '10', name: 'Business Studies', code: 'BST', department: 'Commerce' },
-      { id: '11', name: 'Economics', code: 'ECO', department: 'Commerce' },
-      { id: '12', name: 'Literature', code: 'LIT', department: 'Languages' }
+      // 8-4-4 System Subjects (Secondary)
+      { id: '1', name: 'Mathematics', code: 'MAT', department: 'Sciences', system: '8-4-4', level: 'Secondary' },
+      { id: '2', name: 'English Language', code: 'ENG', department: 'Languages', system: '8-4-4', level: 'Secondary' },
+      { id: '3', name: 'Kiswahili', code: 'KIS', department: 'Languages', system: '8-4-4', level: 'Secondary' },
+      { id: '4', name: 'Biology', code: 'BIO', department: 'Sciences', system: '8-4-4', level: 'Secondary' },
+      { id: '5', name: 'Chemistry', code: 'CHE', department: 'Sciences', system: '8-4-4', level: 'Secondary' },
+      { id: '6', name: 'Physics', code: 'PHY', department: 'Sciences', system: '8-4-4', level: 'Secondary' },
+      { id: '7', name: 'History & Government', code: 'HIS', department: 'Humanities', system: '8-4-4', level: 'Secondary' },
+      { id: '8', name: 'Geography', code: 'GEO', department: 'Humanities', system: '8-4-4', level: 'Secondary' },
+      { id: '9', name: 'Christian Religious Education', code: 'CRE', department: 'Humanities', system: '8-4-4', level: 'Secondary' },
+      { id: '10', name: 'Business Studies', code: 'BST', department: 'Technical', system: '8-4-4', level: 'Secondary' },
+      { id: '11', name: 'Economics', code: 'ECO', department: 'Humanities', system: '8-4-4', level: 'Secondary' },
+      { id: '12', name: 'Literature in English', code: 'LIT', department: 'Languages', system: '8-4-4', level: 'Secondary' },
+      { id: '13', name: 'Computer Studies', code: 'COM', department: 'Technical', system: '8-4-4', level: 'Secondary' },
+      { id: '14', name: 'Agriculture', code: 'AGR', department: 'Technical', system: '8-4-4', level: 'Secondary' },
+      { id: '15', name: 'Home Science', code: 'HSC', department: 'Technical', system: '8-4-4', level: 'Secondary' },
+      
+      // CBC System Subjects (Primary & Junior Secondary)
+      { id: '16', name: 'Mathematics', code: 'MAT', department: 'STEM', system: 'CBC', level: 'Primary' },
+      { id: '17', name: 'English Activities', code: 'ENG', department: 'Languages', system: 'CBC', level: 'Primary' },
+      { id: '18', name: 'Kiswahili Activities', code: 'KIS', department: 'Languages', system: 'CBC', level: 'Primary' },
+      { id: '19', name: 'Environmental Activities', code: 'ENV', department: 'STEM', system: 'CBC', level: 'Primary' },
+      { id: '20', name: 'Hygiene and Nutrition Activities', code: 'HYG', department: 'Life Skills', system: 'CBC', level: 'Primary' },
+      { id: '21', name: 'Religious Education Activities', code: 'REL', department: 'Values', system: 'CBC', level: 'Primary' },
+      { id: '22', name: 'Creative Arts', code: 'ART', department: 'Creative Arts', system: 'CBC', level: 'Primary' },
+      { id: '23', name: 'Physical and Health Education', code: 'PHE', department: 'Life Skills', system: 'CBC', level: 'Primary' },
+      { id: '24', name: 'Integrated Science', code: 'SCI', department: 'STEM', system: 'CBC', level: 'Junior Secondary' },
+      { id: '25', name: 'Social Studies', code: 'SST', department: 'Humanities', system: 'CBC', level: 'Junior Secondary' },
+      { id: '26', name: 'Life Skills Education', code: 'LSE', department: 'Life Skills', system: 'CBC', level: 'Junior Secondary' },
+      { id: '27', name: 'Pre-Technical and Pre-Career Education', code: 'PTE', department: 'Technical', system: 'CBC', level: 'Junior Secondary' }
     ],
     examTypes: [
-      { id: '1', name: 'Mid-Term Exam', weight: 30 },
-      { id: '2', name: 'End-Term Exam', weight: 70 },
-      { id: '3', name: 'CAT 1', weight: 15 },
-      { id: '4', name: 'CAT 2', weight: 15 },
-      { id: '5', name: 'Assignment', weight: 10 },
-      { id: '6', name: 'Project', weight: 20 },
-      { id: '7', name: 'Mock Exam', weight: 100 },
-      { id: '8', name: 'KCSE Trial', weight: 100 }
+      // 8-4-4 System Assessments
+      { id: '1', name: 'Mid-Term Exam', weight: 30, system: '8-4-4' },
+      { id: '2', name: 'End-Term Exam', weight: 70, system: '8-4-4' },
+      { id: '3', name: 'CAT 1', weight: 15, system: '8-4-4' },
+      { id: '4', name: 'CAT 2', weight: 15, system: '8-4-4' },
+      { id: '5', name: 'Assignment', weight: 10, system: '8-4-4' },
+      { id: '6', name: 'KCSE Mock Exam', weight: 100, system: '8-4-4' },
+      { id: '7', name: 'KCSE Trial Exam', weight: 100, system: '8-4-4' },
+      { id: '8', name: 'KCSE Exam', weight: 100, system: '8-4-4' },
+      
+      // CBC System Assessments (Competency-Based)
+      { id: '9', name: 'Formative Assessment', weight: 40, system: 'CBC' },
+      { id: '10', name: 'Summative Assessment', weight: 60, system: 'CBC' },
+      { id: '11', name: 'Project Work', weight: 20, system: 'CBC' },
+      { id: '12', name: 'Portfolio Assessment', weight: 25, system: 'CBC' },
+      { id: '13', name: 'Competency Assessment', weight: 30, system: 'CBC' },
+      { id: '14', name: 'KPSEA (Grade 6)', weight: 100, system: 'CBC' },
+      { id: '15', name: 'KPSE Assessment (Grade 9)', weight: 100, system: 'CBC' }
     ],
-    terms: ['Term 1', 'Term 2', 'Term 3', 'Annual'],
+    terms: ['Term 1', 'Term 2', 'Term 3', 'Annual Assessment'],
     students: [
-      { id: '1', name: 'Alice Mwende', admissionNo: '2024/001', class: 'Form 3A', form: 'Form 3' },
-      { id: '2', name: 'John Kimani', admissionNo: '2024/002', class: 'Form 3A', form: 'Form 3' },
-      { id: '3', name: 'Grace Nyambura', admissionNo: '2024/003', class: 'Form 3A', form: 'Form 3' },
-      { id: '4', name: 'Peter Ochieng', admissionNo: '2024/004', class: 'Form 3B', form: 'Form 3' },
-      { id: '5', name: 'Mary Wanjiru', admissionNo: '2024/005', class: 'Form 3B', form: 'Form 3' },
-      { id: '6', name: 'David Mwangi', admissionNo: '2024/006', class: 'Form 2A', form: 'Form 2' },
-      { id: '7', name: 'Sarah Njeri', admissionNo: '2024/007', class: 'Form 2A', form: 'Form 2' },
-      { id: '8', name: 'James Kiprotich', admissionNo: '2024/008', class: 'Form 2B', form: 'Form 2' },
-      { id: '9', name: 'Ruth Akinyi', admissionNo: '2024/009', class: 'Form 1A', form: 'Form 1' },
-      { id: '10', name: 'Samuel Mutua', admissionNo: '2024/010', class: 'Form 1A', form: 'Form 1' },
-      { id: '11', name: 'Elizabeth Waweru', admissionNo: '2024/011', class: 'Form 4A', form: 'Form 4' },
-      { id: '12', name: 'Francis Kariuki', admissionNo: '2024/012', class: 'Form 4A', form: 'Form 4' }
-    ]
+      // CBC System Students
+      { id: '1', name: 'Amani Wanjiku', admissionNo: 'CBC/PP1/001', class: 'PP1 Red', level: 'Pre-Primary 1', system: 'CBC' },
+      { id: '2', name: 'Brian Omondi', admissionNo: 'CBC/PP2/002', class: 'PP2 Blue', level: 'Pre-Primary 2', system: 'CBC' },
+      { id: '3', name: 'Cynthia Muthoni', admissionNo: 'CBC/G1/003', class: 'Grade 1A', level: 'Grade 1', system: 'CBC' },
+      { id: '4', name: 'Dennis Kiprotich', admissionNo: 'CBC/G2/004', class: 'Grade 2A', level: 'Grade 2', system: 'CBC' },
+      { id: '5', name: 'Esther Akinyi', admissionNo: 'CBC/G3/005', class: 'Grade 3A', level: 'Grade 3', system: 'CBC' },
+      { id: '6', name: 'Felix Mwangi', admissionNo: 'CBC/G4/006', class: 'Grade 4A', level: 'Grade 4', system: 'CBC' },
+      { id: '7', name: 'Grace Chebet', admissionNo: 'CBC/G5/007', class: 'Grade 5A', level: 'Grade 5', system: 'CBC' },
+      { id: '8', name: 'Hassan Abdullahi', admissionNo: 'CBC/G6/008', class: 'Grade 6A', level: 'Grade 6', system: 'CBC' },
+      { id: '9', name: 'Irene Njeri', admissionNo: 'CBC/G7/009', class: 'Grade 7A', level: 'Grade 7', system: 'CBC' },
+      { id: '10', name: 'Joseph Mutua', admissionNo: 'CBC/G8/010', class: 'Grade 8A', level: 'Grade 8', system: 'CBC' },
+      { id: '11', name: 'Karen Waweru', admissionNo: 'CBC/G9/011', class: 'Grade 9A', level: 'Grade 9', system: 'CBC' },
+      
+      // 8-4-4 System Students (Secondary)
+      { id: '12', name: 'Lewis Kimani', admissionNo: '2024/F1/001', class: 'Form 1A', level: 'Form 1', system: '8-4-4' },
+      { id: '13', name: 'Mary Nyambura', admissionNo: '2024/F1/002', class: 'Form 1B', level: 'Form 1', system: '8-4-4' },
+      { id: '14', name: 'Noah Ochieng', admissionNo: '2024/F1/003', class: 'Form 1C', level: 'Form 1', system: '8-4-4' },
+      { id: '15', name: 'Olive Wanjiru', admissionNo: '2023/F2/001', class: 'Form 2A', level: 'Form 2', system: '8-4-4' },
+      { id: '16', name: 'Peter Kariuki', admissionNo: '2023/F2/002', class: 'Form 2B', level: 'Form 2', system: '8-4-4' },
+      { id: '17', name: 'Queenie Auma', admissionNo: '2023/F2/003', class: 'Form 2C', level: 'Form 2', system: '8-4-4' },
+      { id: '18', name: 'Robert Mwende', admissionNo: '2022/F3/001', class: 'Form 3A', level: 'Form 3', system: '8-4-4' },
+      { id: '19', name: 'Sarah Chepchumba', admissionNo: '2022/F3/002', class: 'Form 3B', level: 'Form 3', system: '8-4-4' },
+      { id: '20', name: 'Timothy Kamau', admissionNo: '2021/F4/001', class: 'Form 4A', level: 'Form 4', system: '8-4-4' },
+      { id: '21', name: 'Vivian Anyango', admissionNo: '2021/F4/002', class: 'Form 4B', level: 'Form 4', system: '8-4-4' }
+    ],
+    
+    // Kenyan grading systems
+    gradingSystems: {
+      '8-4-4': {
+        grades: ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'E'],
+        points: [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+        classification: {
+          'A': 'Excellent',
+          'A-': 'Very Good', 
+          'B+': 'Good',
+          'B': 'Good',
+          'B-': 'Above Average',
+          'C+': 'Average',
+          'C': 'Average',
+          'C-': 'Below Average',
+          'D+': 'Weak',
+          'D': 'Weak',
+          'D-': 'Very Weak',
+          'E': 'Failure'
+        }
+      },
+      'CBC': {
+        levels: ['Exceeding Expectations', 'Meeting Expectations', 'Approaching Expectations', 'Below Expectations'],
+        ratings: ['EE', 'ME', 'AE', 'BE'],
+        descriptions: {
+          'EE': 'The learner demonstrates learning beyond expectations',
+          'ME': 'The learner demonstrates expected learning',
+          'AE': 'The learner demonstrates some expected learning',
+          'BE': 'The learner demonstrates minimal expected learning'
+        }
+      }
+    }
   }
   
   // Get URL parameters
@@ -364,15 +454,25 @@ export default function ReportsPage() {
   
   // Filtered data based on selections
   const filteredStudents = selectedClass 
-    ? systemData.students.filter(student => student.class === selectedClass)
+    ? systemData.students.filter(student => {
+        const classData = systemData.classes.find(c => c.id === selectedClass)
+        return student.class === classData?.name
+      })
     : systemData.students
     
   const filteredSubjects = selectedTeacher 
     ? systemData.subjects.filter(subject => {
         const teacher = systemData.teachers.find(t => t.id === selectedTeacher)
-        return teacher?.subjects.includes(subject.name)
+        return teacher?.subjects.includes(subject.name) && teacher.system === subject.system
       })
     : systemData.subjects
+    
+  // Group classes by education system for better organization
+  const classesBySystem = systemData.classes.reduce((acc, classData) => {
+    if (!acc[classData.system]) acc[classData.system] = []
+    acc[classData.system].push(classData)
+    return acc
+  }, {} as Record<string, typeof systemData.classes>)
     
   // Reset form fields
   const resetFormState = () => {
@@ -981,10 +1081,17 @@ export default function ReportsPage() {
                         <SelectValue placeholder="Select a class" />
                       </SelectTrigger>
                       <SelectContent>
-                        {systemData.classes.map((classData) => (
-                          <SelectItem key={classData.id} value={classData.id}>
-                            {classData.name} ({classData.students} students)
-                          </SelectItem>
+                        {Object.entries(classesBySystem).map(([system, classes]) => (
+                          <div key={system}>
+                            <div className="px-2 py-1 text-sm font-semibold text-muted-foreground border-b mb-1">
+                              {system === '8-4-4' ? '8-4-4 System (Secondary)' : 'CBC System'}
+                            </div>
+                            {classes.map((classData) => (
+                              <SelectItem key={classData.id} value={classData.id}>
+                                {classData.name} - {classData.level} ({classData.students} students)
+                              </SelectItem>
+                            ))}
+                          </div>
                         ))}
                       </SelectContent>
                     </Select>
@@ -1007,7 +1114,7 @@ export default function ReportsPage() {
                       <SelectContent>
                         {filteredSubjects.map((subject) => (
                           <SelectItem key={subject.id} value={subject.id}>
-                            {subject.name} ({subject.code})
+                            {subject.name} ({subject.code}) - {subject.system} {subject.level}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1074,10 +1181,17 @@ export default function ReportsPage() {
                             <SelectValue placeholder="Select a class" />
                           </SelectTrigger>
                           <SelectContent>
-                            {systemData.classes.map((classData) => (
-                              <SelectItem key={classData.id} value={classData.id}>
-                                {classData.name} ({classData.students} students)
-                              </SelectItem>
+                            {Object.entries(classesBySystem).map(([system, classes]) => (
+                              <div key={system}>
+                                <div className="px-2 py-1 text-sm font-semibold text-muted-foreground border-b mb-1">
+                                  {system === '8-4-4' ? '8-4-4 System (Secondary)' : 'CBC System'}
+                                </div>
+                                {classes.map((classData) => (
+                                  <SelectItem key={classData.id} value={classData.id}>
+                                    {classData.name} - {classData.level} ({classData.students} students)
+                                  </SelectItem>
+                                ))}
+                              </div>
                             ))}
                           </SelectContent>
                         </Select>

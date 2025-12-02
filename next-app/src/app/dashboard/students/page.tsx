@@ -73,7 +73,7 @@ interface Student {
   guardianEmail: string
   class: string
   section: string
-  rollNumber: string
+  admissionNumber: string
   admissionDate: string
   status: 'active' | 'inactive' | 'graduated' | 'transferred'
   bloodGroup?: string
@@ -98,7 +98,7 @@ const mockStudents: Student[] = [
     guardianEmail: 'robert.doe@email.com',
     class: 'Grade 12',
     section: 'A',
-    rollNumber: '12001',
+    admissionNumber: '2024/F3/001',
     admissionDate: '2023-08-01',
     status: 'active',
     bloodGroup: 'O+',
@@ -120,7 +120,7 @@ const mockStudents: Student[] = [
     guardianEmail: 'mary.smith@email.com',
     class: 'Grade 11',
     section: 'B',
-    rollNumber: '11025',
+    admissionNumber: '2024/F2/015',
     admissionDate: '2023-08-01',
     status: 'active',
     bloodGroup: 'A+',
@@ -142,7 +142,7 @@ const mockStudents: Student[] = [
     guardianEmail: 'david.johnson@email.com',
     class: 'Grade 10',
     section: 'A',
-    rollNumber: '10015',
+    admissionNumber: '2024/F1/032',
     admissionDate: '2023-08-01',
     status: 'active',
     bloodGroup: 'B+',
@@ -202,7 +202,7 @@ export default function StudentsPage() {
       filtered = filtered.filter(student =>
         `${student.firstName} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.rollNumber.includes(searchTerm) ||
+        student.admissionNumber.includes(searchTerm) ||
         student.phone.includes(searchTerm)
       )
     }
@@ -225,9 +225,9 @@ export default function StudentsPage() {
           aValue = `${a.firstName} ${a.lastName}`.toLowerCase()
           bValue = `${b.firstName} ${b.lastName}`.toLowerCase()
           break
-        case 'rollNumber':
-          aValue = a.rollNumber
-          bValue = b.rollNumber
+        case 'admissionNumber':
+          aValue = a.admissionNumber
+          bValue = b.admissionNumber
           break
         case 'class':
           aValue = a.class.toLowerCase()
@@ -283,7 +283,7 @@ export default function StudentsPage() {
       guardianEmail: formData.guardianEmail || '',
       class: formData.class || '',
       section: formData.section || '',
-      rollNumber: formData.rollNumber || '',
+      admissionNumber: formData.admissionNumber || '',
       admissionDate: formData.admissionDate || new Date().toISOString().split('T')[0],
       status: formData.status as 'active' | 'inactive' | 'graduated' | 'transferred',
       bloodGroup: formData.bloodGroup,
@@ -481,12 +481,12 @@ export default function StudentsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="rollNumber">Roll Number</Label>
+                    <Label htmlFor="admissionNumber">Admission Number</Label>
                     <Input
-                      id="rollNumber"
-                      value={formData.rollNumber || ''}
-                      onChange={(e) => setFormData({...formData, rollNumber: e.target.value})}
-                      placeholder="12001"
+                      id="admissionNumber"
+                      value={formData.admissionNumber || ''}
+                      onChange={(e) => setFormData({...formData, admissionNumber: e.target.value})}
+                      placeholder="2024/F1/001"
                     />
                   </div>
                 </div>
@@ -649,8 +649,8 @@ export default function StudentsPage() {
                 <SelectContent>
                   <SelectItem value="name-asc">Name A-Z</SelectItem>
                   <SelectItem value="name-desc">Name Z-A</SelectItem>
-                  <SelectItem value="rollNumber-asc">Roll Number ↑</SelectItem>
-                  <SelectItem value="rollNumber-desc">Roll Number ↓</SelectItem>
+                  <SelectItem value="admissionNumber-asc">Admission Number ↑</SelectItem>
+                  <SelectItem value="admissionNumber-desc">Admission Number ↓</SelectItem>
                   <SelectItem value="class-asc">Class A-Z</SelectItem>
                   <SelectItem value="class-desc">Class Z-A</SelectItem>
                   <SelectItem value="admissionDate-asc">Oldest First</SelectItem>
@@ -684,13 +684,13 @@ export default function StudentsPage() {
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50" 
                     onClick={() => {
-                      const newOrder = sortBy === 'rollNumber' && sortOrder === 'asc' ? 'desc' : 'asc'
-                      updateSearchParams({ sortBy: 'rollNumber', sortOrder: newOrder })
+                      const newOrder = sortBy === 'admissionNumber' && sortOrder === 'asc' ? 'desc' : 'asc'
+                      updateSearchParams({ sortBy: 'admissionNumber', sortOrder: newOrder })
                     }}
                   >
                     <div className="flex items-center">
-                      Roll Number
-                      {sortBy === 'rollNumber' && (
+                      Admission Number
+                      {sortBy === 'admissionNumber' && (
                         <span className="ml-1 text-xs">
                           {sortOrder === 'asc' ? '↑' : '↓'}
                         </span>
@@ -728,7 +728,7 @@ export default function StudentsPage() {
                         <div className="text-sm text-muted-foreground">{student.email}</div>
                       </div>
                     </TableCell>
-                    <TableCell>{student.rollNumber}</TableCell>
+                    <TableCell>{student.admissionNumber}</TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">{student.class}</div>
@@ -800,7 +800,7 @@ export default function StudentsPage() {
                                       <div className="mt-2 space-y-2 text-sm">
                                         <div><strong>Class:</strong> {viewingStudent.class}</div>
                                         <div><strong>Section:</strong> {viewingStudent.section}</div>
-                                        <div><strong>Roll Number:</strong> {viewingStudent.rollNumber}</div>
+                                        <div><strong>Admission Number:</strong> {viewingStudent.admissionNumber}</div>
                                         <div><strong>Admission Date:</strong> {viewingStudent.admissionDate ? new Date(viewingStudent.admissionDate).toLocaleDateString() : 'N/A'}</div>
                                         <div><strong>Status:</strong> {getStatusBadge(viewingStudent.status)}</div>
                                       </div>

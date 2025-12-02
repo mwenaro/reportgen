@@ -10,10 +10,9 @@ import {
   FileText, 
   BarChart3,
   Settings,
-  Home,
-  Bell,
-  Search
+  Home
 } from 'lucide-react'
+import { DashboardHeader } from '@/components/dashboard/header'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -73,37 +72,7 @@ export default function DashboardLayout({
         {/* Main content */}
         <div className="flex-1">
           {/* Header */}
-          <header className="bg-card shadow-sm border-b">
-            <div className="px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      className="pl-10 pr-4 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-4">
-                  <button className="p-2 text-muted-foreground hover:text-foreground">
-                    <Bell className="h-5 w-5" />
-                  </button>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">A</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Admin User</p>
-                      <p className="text-xs text-muted-foreground">Administrator</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </header>
+          <DashboardHeader />
           
           {/* Page content */}
           <main className="p-6">

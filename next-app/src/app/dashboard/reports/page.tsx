@@ -239,6 +239,72 @@ export default function ReportsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
+  // Mock system data - in real app, this would come from your database
+  const systemData = {
+    academicYears: ['2024-2025', '2023-2024', '2022-2023'],
+    teachers: [
+      { id: '1', name: 'Sarah Johnson', subjects: ['Mathematics', 'Statistics'] },
+      { id: '2', name: 'Michael Chen', subjects: ['English Language', 'Literature'] },
+      { id: '3', name: 'Emily Davis', subjects: ['Biology', 'Chemistry'] },
+      { id: '4', name: 'Dr. Robert Wilson', subjects: ['Physics', 'Mathematics'] },
+      { id: '5', name: 'Dr. Lisa Anderson', subjects: ['Physics', 'Chemistry'] },
+      { id: '6', name: 'John Smith', subjects: ['History', 'Geography'] },
+      { id: '7', name: 'Mary Wanjiku', subjects: ['Kiswahili', 'CRE'] },
+      { id: '8', name: 'David Kimani', subjects: ['Business Studies', 'Economics'] }
+    ],
+    classes: [
+      { id: '1', name: 'Form 1A', level: 'Form 1', students: 42 },
+      { id: '2', name: 'Form 1B', level: 'Form 1', students: 40 },
+      { id: '3', name: 'Form 1C', level: 'Form 1', students: 38 },
+      { id: '4', name: 'Form 2A', level: 'Form 2', students: 44 },
+      { id: '5', name: 'Form 2B', level: 'Form 2', students: 42 },
+      { id: '6', name: 'Form 2C', level: 'Form 2', students: 41 },
+      { id: '7', name: 'Form 3A', level: 'Form 3', students: 38 },
+      { id: '8', name: 'Form 3B', level: 'Form 3', students: 36 },
+      { id: '9', name: 'Form 4A', level: 'Form 4', students: 35 },
+      { id: '10', name: 'Form 4B', level: 'Form 4', students: 33 }
+    ],
+    subjects: [
+      { id: '1', name: 'Mathematics', code: 'MAT', department: 'Sciences' },
+      { id: '2', name: 'English Language', code: 'ENG', department: 'Languages' },
+      { id: '3', name: 'Kiswahili', code: 'KIS', department: 'Languages' },
+      { id: '4', name: 'Biology', code: 'BIO', department: 'Sciences' },
+      { id: '5', name: 'Chemistry', code: 'CHE', department: 'Sciences' },
+      { id: '6', name: 'Physics', code: 'PHY', department: 'Sciences' },
+      { id: '7', name: 'History', code: 'HIS', department: 'Humanities' },
+      { id: '8', name: 'Geography', code: 'GEO', department: 'Humanities' },
+      { id: '9', name: 'CRE', code: 'CRE', department: 'Humanities' },
+      { id: '10', name: 'Business Studies', code: 'BST', department: 'Commerce' },
+      { id: '11', name: 'Economics', code: 'ECO', department: 'Commerce' },
+      { id: '12', name: 'Literature', code: 'LIT', department: 'Languages' }
+    ],
+    examTypes: [
+      { id: '1', name: 'Mid-Term Exam', weight: 30 },
+      { id: '2', name: 'End-Term Exam', weight: 70 },
+      { id: '3', name: 'CAT 1', weight: 15 },
+      { id: '4', name: 'CAT 2', weight: 15 },
+      { id: '5', name: 'Assignment', weight: 10 },
+      { id: '6', name: 'Project', weight: 20 },
+      { id: '7', name: 'Mock Exam', weight: 100 },
+      { id: '8', name: 'KCSE Trial', weight: 100 }
+    ],
+    terms: ['Term 1', 'Term 2', 'Term 3', 'Annual'],
+    students: [
+      { id: '1', name: 'Alice Mwende', admissionNo: '2024/001', class: 'Form 3A', form: 'Form 3' },
+      { id: '2', name: 'John Kimani', admissionNo: '2024/002', class: 'Form 3A', form: 'Form 3' },
+      { id: '3', name: 'Grace Nyambura', admissionNo: '2024/003', class: 'Form 3A', form: 'Form 3' },
+      { id: '4', name: 'Peter Ochieng', admissionNo: '2024/004', class: 'Form 3B', form: 'Form 3' },
+      { id: '5', name: 'Mary Wanjiru', admissionNo: '2024/005', class: 'Form 3B', form: 'Form 3' },
+      { id: '6', name: 'David Mwangi', admissionNo: '2024/006', class: 'Form 2A', form: 'Form 2' },
+      { id: '7', name: 'Sarah Njeri', admissionNo: '2024/007', class: 'Form 2A', form: 'Form 2' },
+      { id: '8', name: 'James Kiprotich', admissionNo: '2024/008', class: 'Form 2B', form: 'Form 2' },
+      { id: '9', name: 'Ruth Akinyi', admissionNo: '2024/009', class: 'Form 1A', form: 'Form 1' },
+      { id: '10', name: 'Samuel Mutua', admissionNo: '2024/010', class: 'Form 1A', form: 'Form 1' },
+      { id: '11', name: 'Elizabeth Waweru', admissionNo: '2024/011', class: 'Form 4A', form: 'Form 4' },
+      { id: '12', name: 'Francis Kariuki', admissionNo: '2024/012', class: 'Form 4A', form: 'Form 4' }
+    ]
+  }
+  
   // Get URL parameters
   const searchTerm = searchParams.get('search') || ''
   const typeFilter = searchParams.get('type') || 'all'
@@ -286,6 +352,46 @@ export default function ReportsPage() {
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false)
+  
+  // Form state for dropdowns
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState('')
+  const [selectedTeacher, setSelectedTeacher] = useState('')
+  const [selectedClass, setSelectedClass] = useState('')
+  const [selectedSubject, setSelectedSubject] = useState('')
+  const [selectedStudent, setSelectedStudent] = useState('')
+  const [selectedTerm, setSelectedTerm] = useState('')
+  const [selectedExamType, setSelectedExamType] = useState('')
+  
+  // Filtered data based on selections
+  const filteredStudents = selectedClass 
+    ? systemData.students.filter(student => student.class === selectedClass)
+    : systemData.students
+    
+  const filteredSubjects = selectedTeacher 
+    ? systemData.subjects.filter(subject => {
+        const teacher = systemData.teachers.find(t => t.id === selectedTeacher)
+        return teacher?.subjects.includes(subject.name)
+      })
+    : systemData.subjects
+    
+  // Reset form fields
+  const resetFormState = () => {
+    setSelectedAcademicYear('')
+    setSelectedTeacher('')
+    setSelectedClass('')
+    setSelectedSubject('')
+    setSelectedStudent('')
+    setSelectedTerm('')
+    setSelectedExamType('')
+    setFormData({
+      type: 'student_terminal',
+      reportScope: 'individual',
+      term: '',
+      academicYear: '',
+      teacher: '',
+      status: 'draft'
+    })
+  }
 
   // Update URL parameters
   const updateSearchParams = (updates: Record<string, string | null>) => {
@@ -716,9 +822,12 @@ export default function ReportsPage() {
             )}
             {isGenerating ? 'Generating...' : 'Sample Report'}
           </Button>
-          <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
+          <Dialog open={isGenerateDialogOpen} onOpenChange={(open) => {
+            setIsGenerateDialogOpen(open)
+            if (!open) resetFormState()
+          }}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={resetFormState}>
                 <Plus className="mr-2 h-4 w-4" />
                 Generate Report
               </Button>
@@ -761,26 +870,45 @@ export default function ReportsPage() {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="term">Term *</Label>
-                    <Select value={formData.term} onValueChange={(value) => setFormData({...formData, term: value as any})}>
+                    <Select 
+                      value={selectedTerm} 
+                      onValueChange={(value) => {
+                        setSelectedTerm(value)
+                        setFormData(prev => ({ ...prev, term: value }))
+                      }}
+                    >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select term" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Term 1">Term 1</SelectItem>
-                        <SelectItem value="Term 2">Term 2</SelectItem>
-                        <SelectItem value="Term 3">Term 3</SelectItem>
-                        <SelectItem value="Annual">Annual</SelectItem>
+                        {systemData.terms.map((term) => (
+                          <SelectItem key={term} value={term}>
+                            {term}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="academicYear">Academic Year *</Label>
-                    <Input
-                      id="academicYear"
-                      value={formData.academicYear || ''}
-                      onChange={(e) => setFormData({...formData, academicYear: e.target.value})}
-                      placeholder="2024-2025"
-                    />
+                    <Select
+                      value={selectedAcademicYear}
+                      onValueChange={(value) => {
+                        setSelectedAcademicYear(value)
+                        setFormData(prev => ({ ...prev, academicYear: value }))
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select academic year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {systemData.academicYears.map((year) => (
+                          <SelectItem key={year} value={year}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="format">Format</Label>
@@ -800,12 +928,27 @@ export default function ReportsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="teacher">Teacher/Creator *</Label>
-                    <Input
-                      id="teacher"
-                      value={formData.teacher || ''}
-                      onChange={(e) => setFormData({...formData, teacher: e.target.value})}
-                      placeholder="Teacher name"
-                    />
+                    <Select
+                      value={selectedTeacher}
+                      onValueChange={(value) => {
+                        setSelectedTeacher(value)
+                        const teacher = systemData.teachers.find(t => t.id === value)
+                        setFormData(prev => ({ ...prev, teacher: teacher?.name || '' }))
+                        // Reset subject when teacher changes
+                        setSelectedSubject('')
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a teacher" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {systemData.teachers.map((teacher) => (
+                          <SelectItem key={teacher.id} value={teacher.id}>
+                            {teacher.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
@@ -824,23 +967,51 @@ export default function ReportsPage() {
                 {(formData.type === 'class_terminal' || formData.type === 'class_scoresheet') && (
                   <div className="space-y-2">
                     <Label htmlFor="class">Class</Label>
-                    <Input
-                      id="class"
-                      value={formData.class || ''}
-                      onChange={(e) => setFormData({...formData, class: e.target.value})}
-                      placeholder="Grade 1A, Form 2B, etc."
-                    />
+                    <Select
+                      value={selectedClass}
+                      onValueChange={(value) => {
+                        setSelectedClass(value)
+                        const selectedClassData = systemData.classes.find(c => c.id === value)
+                        setFormData(prev => ({ ...prev, class: selectedClassData?.name || '' }))
+                        // Reset student when class changes
+                        setSelectedStudent('')
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a class" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {systemData.classes.map((classData) => (
+                          <SelectItem key={classData.id} value={classData.id}>
+                            {classData.name} ({classData.students} students)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
                 {(formData.type === 'subject_scoresheet' || formData.type === 'class_terminal') && (
                   <div className="space-y-2">
                     <Label htmlFor="subject">Subject</Label>
-                    <Input
-                      id="subject"
-                      value={formData.subject || ''}
-                      onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                      placeholder="Mathematics, English, Science, etc."
-                    />
+                    <Select
+                      value={selectedSubject}
+                      onValueChange={(value) => {
+                        setSelectedSubject(value)
+                        const subject = systemData.subjects.find(s => s.id === value)
+                        setFormData(prev => ({ ...prev, subject: subject?.name || '' }))
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a subject" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredSubjects.map((subject) => (
+                          <SelectItem key={subject.id} value={subject.id}>
+                            {subject.name} ({subject.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
                 {(formData.type === 'student_terminal' || formData.type === 'progress_report') && (
@@ -864,24 +1035,52 @@ export default function ReportsPage() {
                     {formData.reportScope !== 'class' && (
                       <div className="space-y-2">
                         <Label htmlFor="student">Student Name</Label>
-                        <Input
-                          id="student"
-                          value={formData.student || ''}
-                          onChange={(e) => setFormData({...formData, student: e.target.value})}
-                          placeholder="Student full name"
-                        />
+                        <Select
+                          value={selectedStudent}
+                          onValueChange={(value) => {
+                            setSelectedStudent(value)
+                            const student = systemData.students.find(s => s.id === value)
+                            setFormData(prev => ({ ...prev, student: student?.name || '' }))
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a student" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {filteredStudents.map((student) => (
+                              <SelectItem key={student.id} value={student.id}>
+                                {student.name} - {student.admissionNo} ({student.class})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     )}
                     
                     {(formData.reportScope === 'class' || formData.type === 'progress_report') && (
                       <div className="space-y-2">
                         <Label htmlFor="class">Class</Label>
-                        <Input
-                          id="class"
-                          value={formData.class || ''}
-                          onChange={(e) => setFormData({...formData, class: e.target.value})}
-                          placeholder="Grade 1A, Form 2B, etc."
-                        />
+                        <Select
+                          value={selectedClass}
+                          onValueChange={(value) => {
+                            setSelectedClass(value)
+                            const selectedClassData = systemData.classes.find(c => c.id === value)
+                            setFormData(prev => ({ ...prev, class: selectedClassData?.name || '' }))
+                            // Reset student when class changes
+                            setSelectedStudent('')
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a class" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {systemData.classes.map((classData) => (
+                              <SelectItem key={classData.id} value={classData.id}>
+                                {classData.name} ({classData.students} students)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     )}
                   </div>

@@ -1,31 +1,1072 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
+import { 
+  Search, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Eye,
+  Download,
+  Upload,
+  Filter,
+  FileText,
+  BarChart3,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Users,
+  GraduationCap,
+  ClipboardList,
+  TrendingUp,
+  School,
+  BookOpen,
+  Award,
+  Target,
+  PieChart,
+  LineChart
+} from 'lucide-react'
+
+interface AssessmentReport {
+  id: string
+  title: string
+  type: 'student_terminal' | 'class_terminal' | 'subject_scoresheet' | 'class_scoresheet' | 'performance_analysis' | 'progress_report'
+  description: string
+  term: 'Term 1' | 'Term 2' | 'Term 3' | 'Annual'
+  academicYear: string
+  class?: string
+  subject?: string
+  student?: string
+  teacher: string
+  totalStudents?: number
+  avgScore?: number
+  highestScore?: number
+  lowestScore?: number
+  passRate?: number
+  generatedDate: string
+  status: 'draft' | 'generated' | 'published' | 'archived'
+  format: 'pdf' | 'excel' | 'word' | 'csv'
+  fileSize?: string
+  downloadCount: number
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+// Mock data for assessment reports
+const mockReports: AssessmentReport[] = [
+  {
+    id: '1',
+    title: 'Grade 1A Terminal Report - Mathematics',
+    type: 'class_terminal',
+    description: 'Comprehensive class performance report for Mathematics Term 1',
+    term: 'Term 1',
+    academicYear: '2024-2025',
+    class: 'Grade 1A',
+    subject: 'Mathematics',
+    teacher: 'Sarah Johnson',
+    totalStudents: 25,
+    avgScore: 78.5,
+    highestScore: 95,
+    lowestScore: 45,
+    passRate: 88,
+    generatedDate: '2024-04-15',
+    status: 'published',
+    format: 'pdf',
+    fileSize: '2.4 MB',
+    downloadCount: 12,
+    createdBy: 'Sarah Johnson',
+    createdAt: '2024-04-15T10:00:00Z',
+    updatedAt: '2024-04-15T10:00:00Z'
+  },
+  {
+    id: '2',
+    title: 'John Smith - Individual Terminal Report',
+    type: 'student_terminal',
+    description: 'Complete academic performance report for John Smith',
+    term: 'Term 1',
+    academicYear: '2024-2025',
+    class: 'Grade 2B',
+    student: 'John Smith',
+    teacher: 'Emily Davis',
+    avgScore: 82.3,
+    generatedDate: '2024-04-16',
+    status: 'generated',
+    format: 'pdf',
+    fileSize: '1.8 MB',
+    downloadCount: 3,
+    createdBy: 'Emily Davis',
+    createdAt: '2024-04-16T09:00:00Z',
+    updatedAt: '2024-04-16T09:00:00Z'
+  },
+  {
+    id: '3',
+    title: 'English Language Scoresheet - All Classes',
+    type: 'subject_scoresheet',
+    description: 'Subject-wide performance analysis for English Language',
+    term: 'Term 1',
+    academicYear: '2024-2025',
+    subject: 'English Language',
+    teacher: 'Michael Chen',
+    totalStudents: 75,
+    avgScore: 74.2,
+    highestScore: 92,
+    lowestScore: 38,
+    passRate: 82,
+    generatedDate: '2024-04-18',
+    status: 'published',
+    format: 'excel',
+    fileSize: '856 KB',
+    downloadCount: 8,
+    createdBy: 'Michael Chen',
+    createdAt: '2024-04-18T11:00:00Z',
+    updatedAt: '2024-04-18T11:00:00Z'
+  },
+  {
+    id: '4',
+    title: 'Form 3A Class Scoresheet - All Subjects',
+    type: 'class_scoresheet',
+    description: 'Complete class performance across all subjects',
+    term: 'Term 2',
+    academicYear: '2024-2025',
+    class: 'Form 3A',
+    teacher: 'Dr. Robert Wilson',
+    totalStudents: 28,
+    avgScore: 71.8,
+    highestScore: 89,
+    lowestScore: 42,
+    passRate: 78,
+    generatedDate: '2024-08-20',
+    status: 'generated',
+    format: 'pdf',
+    fileSize: '3.2 MB',
+    downloadCount: 15,
+    createdBy: 'Dr. Robert Wilson',
+    createdAt: '2024-08-20T14:00:00Z',
+    updatedAt: '2024-08-20T14:00:00Z'
+  },
+  {
+    id: '5',
+    title: 'Physics Performance Analysis - Term 2',
+    type: 'performance_analysis',
+    description: 'Detailed performance trends and analytics for Physics',
+    term: 'Term 2',
+    academicYear: '2024-2025',
+    subject: 'Physics',
+    teacher: 'Dr. Lisa Anderson',
+    totalStudents: 45,
+    avgScore: 68.7,
+    highestScore: 94,
+    lowestScore: 35,
+    passRate: 73,
+    generatedDate: '2024-08-25',
+    status: 'draft',
+    format: 'excel',
+    fileSize: '1.2 MB',
+    downloadCount: 0,
+    createdBy: 'Dr. Lisa Anderson',
+    createdAt: '2024-08-25T16:00:00Z',
+    updatedAt: '2024-08-25T16:00:00Z'
+  },
+  {
+    id: '6',
+    title: 'Maria Rodriguez - Progress Report',
+    type: 'progress_report',
+    description: 'Monthly progress tracking report for Maria Rodriguez',
+    term: 'Term 2',
+    academicYear: '2024-2025',
+    class: 'Grade 4B',
+    student: 'Maria Rodriguez',
+    teacher: 'John Smith',
+    avgScore: 85.6,
+    generatedDate: '2024-09-01',
+    status: 'published',
+    format: 'pdf',
+    fileSize: '1.5 MB',
+    downloadCount: 5,
+    createdBy: 'John Smith',
+    createdAt: '2024-09-01T10:00:00Z',
+    updatedAt: '2024-09-01T10:00:00Z'
+  }
+]
+
 export default function ReportsPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Get URL parameters
+  const searchTerm = searchParams.get('search') || ''
+  const typeFilter = searchParams.get('type') || 'all'
+  const statusFilter = searchParams.get('status') || 'all'
+  const termFilter = searchParams.get('term') || 'all'
+  const formatFilter = searchParams.get('format') || 'all'
+  const sortBy = searchParams.get('sortBy') || 'generatedDate'
+  const sortOrder = searchParams.get('sortOrder') || 'desc'
+  const page = Number(searchParams.get('page')) || 1
+  const pageSize = Number(searchParams.get('pageSize')) || 10
+  
+  const [reports, setReports] = useState<AssessmentReport[]>(mockReports)
+  const [filteredReports, setFilteredReports] = useState<AssessmentReport[]>(mockReports)
+  const [paginatedReports, setPaginatedReports] = useState<AssessmentReport[]>([])
+  const [totalPages, setTotalPages] = useState(1)
+  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false)
+  const [viewingReport, setViewingReport] = useState<AssessmentReport | null>(null)
+  const [formData, setFormData] = useState<Partial<AssessmentReport>>({
+    type: 'class_terminal',
+    term: 'Term 1',
+    academicYear: '2024-2025',
+    status: 'draft',
+    format: 'pdf',
+    downloadCount: 0
+  })
+
+  // Update URL parameters
+  const updateSearchParams = (updates: Record<string, string | null>) => {
+    const current = new URLSearchParams(Array.from(searchParams.entries()))
+    
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === '' || value === 'all') {
+        current.delete(key)
+      } else {
+        current.set(key, value)
+      }
+    })
+    
+    const search = current.toString()
+    const query = search ? `?${search}` : ''
+    router.replace(`/dashboard/reports${query}`, { scroll: false })
+  }
+
+  // Filter and sort reports based on URL parameters
+  useEffect(() => {
+    let filtered = reports
+
+    if (searchTerm) {
+      filtered = filtered.filter(report =>
+        report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.teacher.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.class?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.student?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter(report => report.type === typeFilter)
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(report => report.status === statusFilter)
+    }
+
+    if (termFilter !== 'all') {
+      filtered = filtered.filter(report => report.term === termFilter)
+    }
+
+    if (formatFilter !== 'all') {
+      filtered = filtered.filter(report => report.format === formatFilter)
+    }
+
+    // Sort reports
+    filtered.sort((a, b) => {
+      let aValue: string | number = ''
+      let bValue: string | number = ''
+
+      switch (sortBy) {
+        case 'title':
+          aValue = a.title.toLowerCase()
+          bValue = b.title.toLowerCase()
+          break
+        case 'generatedDate':
+          aValue = new Date(a.generatedDate).getTime()
+          bValue = new Date(b.generatedDate).getTime()
+          break
+        case 'avgScore':
+          aValue = a.avgScore || 0
+          bValue = b.avgScore || 0
+          break
+        case 'downloadCount':
+          aValue = a.downloadCount
+          bValue = b.downloadCount
+          break
+        case 'teacher':
+          aValue = a.teacher.toLowerCase()
+          bValue = b.teacher.toLowerCase()
+          break
+        default:
+          aValue = new Date(a.generatedDate).getTime()
+          bValue = new Date(b.generatedDate).getTime()
+      }
+
+      if (sortOrder === 'desc') {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
+      }
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+    })
+
+    setFilteredReports(filtered)
+    
+    // Calculate pagination
+    const total = filtered.length
+    const totalPagesCalc = Math.ceil(total / pageSize)
+    setTotalPages(totalPagesCalc)
+    
+    // Get paginated results
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    const paginated = filtered.slice(startIndex, endIndex)
+    setPaginatedReports(paginated)
+    
+  }, [reports, searchTerm, typeFilter, statusFilter, termFilter, formatFilter, sortBy, sortOrder, page, pageSize])
+
+  const handleGenerateReport = () => {
+    if (!formData.title || !formData.type || !formData.teacher) {
+      alert('Please fill in all required fields')
+      return
+    }
+
+    const newReport: AssessmentReport = {
+      id: Date.now().toString(),
+      title: formData.title!,
+      type: formData.type as any,
+      description: formData.description || '',
+      term: formData.term as any,
+      academicYear: formData.academicYear!,
+      class: formData.class,
+      subject: formData.subject,
+      student: formData.student,
+      teacher: formData.teacher!,
+      totalStudents: formData.totalStudents,
+      avgScore: formData.avgScore,
+      highestScore: formData.highestScore,
+      lowestScore: formData.lowestScore,
+      passRate: formData.passRate,
+      generatedDate: new Date().toISOString().split('T')[0],
+      status: formData.status as any,
+      format: formData.format as any,
+      downloadCount: 0,
+      createdBy: formData.teacher!,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+
+    setReports([...reports, newReport])
+    setIsGenerateDialogOpen(false)
+    resetForm()
+  }
+
+  const handleDeleteReport = (reportId: string) => {
+    setReports(reports.filter(r => r.id !== reportId))
+  }
+
+  const resetForm = () => {
+    setFormData({
+      type: 'class_terminal',
+      term: 'Term 1',
+      academicYear: '2024-2025',
+      status: 'draft',
+      format: 'pdf',
+      downloadCount: 0
+    })
+  }
+
+  const getStatusBadge = (status: string) => {
+    const variants: { [key: string]: 'default' | 'secondary' | 'destructive' | 'outline' } = {
+      draft: 'outline',
+      generated: 'secondary',
+      published: 'default',
+      archived: 'destructive'
+    }
+    return <Badge variant={variants[status] || 'secondary'}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>
+  }
+
+  const getTypeBadge = (type: string) => {
+    const typeLabels: { [key: string]: string } = {
+      student_terminal: 'Student Terminal',
+      class_terminal: 'Class Terminal',
+      subject_scoresheet: 'Subject Scoresheet',
+      class_scoresheet: 'Class Scoresheet',
+      performance_analysis: 'Performance Analysis',
+      progress_report: 'Progress Report'
+    }
+    return <Badge variant="outline">{typeLabels[type] || type}</Badge>
+  }
+
+  const getFormatIcon = (format: string) => {
+    switch (format) {
+      case 'pdf':
+        return <FileText className="h-4 w-4 text-red-500" />
+      case 'excel':
+        return <BarChart3 className="h-4 w-4 text-green-500" />
+      case 'word':
+        return <FileText className="h-4 w-4 text-blue-500" />
+      case 'csv':
+        return <FileText className="h-4 w-4 text-gray-500" />
+      default:
+        return <FileText className="h-4 w-4" />
+    }
+  }
+
   return (
-    <div>
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-          <p className="mt-2 text-sm text-gray-700">
-            Generate student reports, performance analytics, and academic summaries.
+    <div className="flex-1 space-y-4 p-4 pt-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Assessment Reports</h2>
+          <p className="text-muted-foreground">
+            Generate and manage academic performance reports and scoresheets
           </p>
         </div>
-        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-          <button
-            type="button"
-            className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Generate Report
-          </button>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm">
+            <Upload className="mr-2 h-4 w-4" />
+            Import
+          </Button>
+          <Button variant="outline" size="sm">
+            <Download className="mr-2 h-4 w-4" />
+            Export All
+          </Button>
+          <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Generate Report
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Generate New Assessment Report</DialogTitle>
+                <DialogDescription>
+                  Create a new assessment report with specific parameters and criteria.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Report Title *</Label>
+                    <Input
+                      id="title"
+                      value={formData.title || ''}
+                      onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      placeholder="Grade 1A Terminal Report - Mathematics"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="type">Report Type *</Label>
+                    <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value as any})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="student_terminal">Student Terminal Report</SelectItem>
+                        <SelectItem value="class_terminal">Class Terminal Report</SelectItem>
+                        <SelectItem value="subject_scoresheet">Subject Scoresheet</SelectItem>
+                        <SelectItem value="class_scoresheet">Class Scoresheet</SelectItem>
+                        <SelectItem value="performance_analysis">Performance Analysis</SelectItem>
+                        <SelectItem value="progress_report">Progress Report</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="term">Term *</Label>
+                    <Select value={formData.term} onValueChange={(value) => setFormData({...formData, term: value as any})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Term 1">Term 1</SelectItem>
+                        <SelectItem value="Term 2">Term 2</SelectItem>
+                        <SelectItem value="Term 3">Term 3</SelectItem>
+                        <SelectItem value="Annual">Annual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="academicYear">Academic Year *</Label>
+                    <Input
+                      id="academicYear"
+                      value={formData.academicYear || ''}
+                      onChange={(e) => setFormData({...formData, academicYear: e.target.value})}
+                      placeholder="2024-2025"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="format">Format</Label>
+                    <Select value={formData.format} onValueChange={(value) => setFormData({...formData, format: value as any})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pdf">PDF</SelectItem>
+                        <SelectItem value="excel">Excel</SelectItem>
+                        <SelectItem value="word">Word</SelectItem>
+                        <SelectItem value="csv">CSV</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="teacher">Teacher/Creator *</Label>
+                    <Input
+                      id="teacher"
+                      value={formData.teacher || ''}
+                      onChange={(e) => setFormData({...formData, teacher: e.target.value})}
+                      placeholder="Teacher name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value as any})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="generated">Generated</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {(formData.type === 'class_terminal' || formData.type === 'class_scoresheet') && (
+                  <div className="space-y-2">
+                    <Label htmlFor="class">Class</Label>
+                    <Input
+                      id="class"
+                      value={formData.class || ''}
+                      onChange={(e) => setFormData({...formData, class: e.target.value})}
+                      placeholder="Grade 1A, Form 2B, etc."
+                    />
+                  </div>
+                )}
+                {(formData.type === 'subject_scoresheet' || formData.type === 'class_terminal') && (
+                  <div className="space-y-2">
+                    <Label htmlFor="subject">Subject</Label>
+                    <Input
+                      id="subject"
+                      value={formData.subject || ''}
+                      onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                      placeholder="Mathematics, English, Science, etc."
+                    />
+                  </div>
+                )}
+                {(formData.type === 'student_terminal' || formData.type === 'progress_report') && (
+                  <div className="space-y-2">
+                    <Label htmlFor="student">Student Name</Label>
+                    <Input
+                      id="student"
+                      value={formData.student || ''}
+                      onChange={(e) => setFormData({...formData, student: e.target.value})}
+                      placeholder="Student full name"
+                    />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Input
+                    id="description"
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    placeholder="Brief description of the report"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => {setIsGenerateDialogOpen(false); resetForm()}}>
+                  Cancel
+                </Button>
+                <Button onClick={handleGenerateReport}>Generate Report</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
-      <div className="mt-8">
-        {/* Report generation interface will be implemented later */}
-        <div className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-lg">
-          <div className="p-6 text-center text-gray-500">
-            Report generation interface coming soon...
-          </div>
-        </div>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Reports</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{reports.length}</div>
+            <p className="text-xs text-muted-foreground">
+              {reports.filter(r => r.status === 'published').length} published
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Performance</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {Math.round(reports.filter(r => r.avgScore).reduce((sum, r) => sum + (r.avgScore || 0), 0) / reports.filter(r => r.avgScore).length * 10) / 10}%
+            </div>
+            <p className="text-xs text-muted-foreground">Average across all reports</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Downloads</CardTitle>
+            <Download className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {reports.reduce((sum, r) => sum + r.downloadCount, 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">Report downloads</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pass Rate</CardTitle>
+            <Award className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {Math.round(reports.filter(r => r.passRate).reduce((sum, r) => sum + (r.passRate || 0), 0) / reports.filter(r => r.passRate).length)}%
+            </div>
+            <p className="text-xs text-muted-foreground">Average pass rate</p>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Reports Directory */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Reports Directory</CardTitle>
+              {(searchTerm || typeFilter !== 'all' || statusFilter !== 'all' || termFilter !== 'all' || formatFilter !== 'all') && (
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-sm text-muted-foreground">Filters:</span>
+                  {searchTerm && (
+                    <Badge variant="secondary" className="text-xs">
+                      Search: "{searchTerm}"
+                    </Badge>
+                  )}
+                  {typeFilter !== 'all' && (
+                    <Badge variant="secondary" className="text-xs">
+                      Type: {typeFilter}
+                    </Badge>
+                  )}
+                  {statusFilter !== 'all' && (
+                    <Badge variant="secondary" className="text-xs">
+                      Status: {statusFilter}
+                    </Badge>
+                  )}
+                  {termFilter !== 'all' && (
+                    <Badge variant="secondary" className="text-xs">
+                      Term: {termFilter}
+                    </Badge>
+                  )}
+                  {formatFilter !== 'all' && (
+                    <Badge variant="secondary" className="text-xs">
+                      Format: {formatFilter}
+                    </Badge>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => updateSearchParams({ search: null, type: null, status: null, term: null, format: null, sortBy: null, sortOrder: null })}
+                    className="h-6 px-2 text-xs"
+                  >
+                    Clear all
+                  </Button>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search reports..."
+                  value={searchTerm}
+                  onChange={(e) => updateSearchParams({ search: e.target.value })}
+                  className="pl-8 w-[300px]"
+                />
+              </div>
+              <Select value={typeFilter} onValueChange={(value) => updateSearchParams({ type: value })}>
+                <SelectTrigger className="w-[160px]">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="student_terminal">Student Terminal</SelectItem>
+                  <SelectItem value="class_terminal">Class Terminal</SelectItem>
+                  <SelectItem value="subject_scoresheet">Subject Scoresheet</SelectItem>
+                  <SelectItem value="class_scoresheet">Class Scoresheet</SelectItem>
+                  <SelectItem value="performance_analysis">Performance Analysis</SelectItem>
+                  <SelectItem value="progress_report">Progress Report</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={(value) => updateSearchParams({ status: value })}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="generated">Generated</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={termFilter} onValueChange={(value) => updateSearchParams({ term: value })}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Term" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Terms</SelectItem>
+                  <SelectItem value="Term 1">Term 1</SelectItem>
+                  <SelectItem value="Term 2">Term 2</SelectItem>
+                  <SelectItem value="Term 3">Term 3</SelectItem>
+                  <SelectItem value="Annual">Annual</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
+                const [newSortBy, newSortOrder] = value.split('-')
+                updateSearchParams({ sortBy: newSortBy, sortOrder: newSortOrder })
+              }}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="generatedDate-desc">Latest First</SelectItem>
+                  <SelectItem value="generatedDate-asc">Oldest First</SelectItem>
+                  <SelectItem value="title-asc">Title A-Z</SelectItem>
+                  <SelectItem value="title-desc">Title Z-A</SelectItem>
+                  <SelectItem value="avgScore-desc">Score High-Low</SelectItem>
+                  <SelectItem value="avgScore-asc">Score Low-High</SelectItem>
+                  <SelectItem value="downloadCount-desc">Most Downloaded</SelectItem>
+                  <SelectItem value="teacher-asc">Teacher A-Z</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Report</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Term/Year</TableHead>
+                  <TableHead>Performance</TableHead>
+                  <TableHead>Generated</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Downloads</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedReports.map((report) => (
+                  <TableRow key={report.id}>
+                    <TableCell>
+                      <div className="flex items-start space-x-3">
+                        {getFormatIcon(report.format)}
+                        <div>
+                          <div className="font-medium">{report.title}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {report.class && <span>Class: {report.class}</span>}
+                            {report.subject && <span> • Subject: {report.subject}</span>}
+                            {report.student && <span>Student: {report.student}</span>}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            by {report.teacher}
+                            {report.fileSize && <span> • {report.fileSize}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getTypeBadge(report.type)}</TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{report.term}</div>
+                        <div className="text-sm text-muted-foreground">{report.academicYear}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {report.avgScore && (
+                        <div>
+                          <div className="font-medium">{report.avgScore}% avg</div>
+                          {report.passRate && (
+                            <div className="text-sm text-muted-foreground">{report.passRate}% pass rate</div>
+                          )}
+                          {report.totalStudents && (
+                            <div className="text-xs text-muted-foreground">{report.totalStudents} students</div>
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{new Date(report.generatedDate).toLocaleDateString()}</div>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(report.status)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-1">
+                        <Download className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-sm">{report.downloadCount}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={() => setViewingReport(report)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>Report Details</DialogTitle>
+                            </DialogHeader>
+                            {viewingReport && (
+                              <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-2 gap-6">
+                                  <div className="space-y-4">
+                                    <div>
+                                      <h3 className="font-semibold flex items-center">
+                                        <FileText className="mr-2 h-4 w-4" />
+                                        Report Information
+                                      </h3>
+                                      <div className="mt-2 space-y-2 text-sm">
+                                        <div><strong>Title:</strong> {viewingReport.title}</div>
+                                        <div><strong>Type:</strong> {getTypeBadge(viewingReport.type)}</div>
+                                        <div><strong>Description:</strong> {viewingReport.description}</div>
+                                        <div><strong>Generated:</strong> {new Date(viewingReport.generatedDate).toLocaleDateString()}</div>
+                                        <div><strong>Created by:</strong> {viewingReport.createdBy}</div>
+                                        <div><strong>Status:</strong> {getStatusBadge(viewingReport.status)}</div>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <h3 className="font-semibold flex items-center">
+                                        <Calendar className="mr-2 h-4 w-4" />
+                                        Academic Period
+                                      </h3>
+                                      <div className="mt-2 space-y-2 text-sm">
+                                        <div><strong>Term:</strong> {viewingReport.term}</div>
+                                        <div><strong>Academic Year:</strong> {viewingReport.academicYear}</div>
+                                        {viewingReport.class && <div><strong>Class:</strong> {viewingReport.class}</div>}
+                                        {viewingReport.subject && <div><strong>Subject:</strong> {viewingReport.subject}</div>}
+                                        {viewingReport.student && <div><strong>Student:</strong> {viewingReport.student}</div>}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-4">
+                                    {viewingReport.avgScore && (
+                                      <div>
+                                        <h3 className="font-semibold flex items-center">
+                                          <BarChart3 className="mr-2 h-4 w-4" />
+                                          Performance Metrics
+                                        </h3>
+                                        <div className="mt-2 space-y-2 text-sm">
+                                          <div><strong>Average Score:</strong> {viewingReport.avgScore}%</div>
+                                          {viewingReport.highestScore && <div><strong>Highest Score:</strong> {viewingReport.highestScore}%</div>}
+                                          {viewingReport.lowestScore && <div><strong>Lowest Score:</strong> {viewingReport.lowestScore}%</div>}
+                                          {viewingReport.passRate && <div><strong>Pass Rate:</strong> {viewingReport.passRate}%</div>}
+                                          {viewingReport.totalStudents && <div><strong>Total Students:</strong> {viewingReport.totalStudents}</div>}
+                                        </div>
+                                      </div>
+                                    )}
+                                    <div>
+                                      <h3 className="font-semibold flex items-center">
+                                        <Download className="mr-2 h-4 w-4" />
+                                        File Information
+                                      </h3>
+                                      <div className="mt-2 space-y-2 text-sm">
+                                        <div className="flex items-center">
+                                          <strong>Format:</strong>
+                                          <span className="ml-2 flex items-center">
+                                            {getFormatIcon(viewingReport.format)}
+                                            <span className="ml-1">{viewingReport.format.toUpperCase()}</span>
+                                          </span>
+                                        </div>
+                                        {viewingReport.fileSize && <div><strong>File Size:</strong> {viewingReport.fileSize}</div>}
+                                        <div><strong>Downloads:</strong> {viewingReport.downloadCount}</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            <DialogFooter>
+                              <Button variant="outline" onClick={() => setViewingReport(null)}>
+                                Close
+                              </Button>
+                              <Button>
+                                <Download className="mr-2 h-4 w-4" />
+                                Download Report
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                        <Button variant="ghost" size="sm">
+                          <Download className="h-4 w-4 text-blue-500" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Report</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{report.title}"? 
+                                This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-red-600 hover:bg-red-700"
+                                onClick={() => handleDeleteReport(report.id)}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          {paginatedReports.length === 0 && (
+            <div className="text-center py-8">
+              <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-2 text-lg font-medium">No reports found</h3>
+              <p className="text-muted-foreground">
+                {searchTerm ? 'Try adjusting your search terms.' : 'Get started by generating your first report.'}
+              </p>
+            </div>
+          )}
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-2 py-4 border-t">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, filteredReports.length)} of {filteredReports.length} reports
+                </span>
+                <Select 
+                  value={pageSize.toString()} 
+                  onValueChange={(value) => updateSearchParams({ pageSize: value, page: '1' })}
+                >
+                  <SelectTrigger className="w-[70px] h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">per page</span>
+              </div>
+              
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateSearchParams({ page: (page - 1).toString() })}
+                  disabled={page <= 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(pageNum => {
+                      return pageNum === 1 || 
+                             pageNum === totalPages || 
+                             Math.abs(pageNum - page) <= 1
+                    })
+                    .map((pageNum, index, array) => (
+                      <div key={pageNum} className="flex items-center">
+                        {index > 0 && array[index - 1] !== pageNum - 1 && (
+                          <span className="px-2 text-muted-foreground">...</span>
+                        )}
+                        <Button
+                          variant={page === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => updateSearchParams({ page: pageNum.toString() })}
+                          className="w-8 h-8 p-0"
+                        >
+                          {pageNum}
+                        </Button>
+                      </div>
+                    ))}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateSearchParams({ page: (page + 1).toString() })}
+                  disabled={page >= totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

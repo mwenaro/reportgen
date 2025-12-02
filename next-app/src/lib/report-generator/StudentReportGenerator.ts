@@ -1,12 +1,8 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable, { UserOptions } from 'jspdf-autotable';
 
-// Extend jsPDF type to include autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
+// Type definitions for autoTable options
+interface AutoTableOptions extends UserOptions {}
 
 export interface Subject {
   code: string;
@@ -375,7 +371,7 @@ export class StudentReportGenerator {
     });
 
     // Draw table using autoTable
-    this.pdf.autoTable({
+    autoTable(this.pdf, {
       startY: startY + 2,
       head: [headers],
       body: tableData,
@@ -427,7 +423,7 @@ export class StudentReportGenerator {
 
     const summaryHeaders = ['Term', 'Year', 'Marks Total', 'Marks Of', 'Points', 'Of', 'M.P', 'M.G', 'Pos', 'Of', 'Pos', 'Of', 'Dev'];
 
-    this.pdf.autoTable({
+    autoTable(this.pdf, {
       startY: summaryY,
       head: [summaryHeaders],
       body: summaryData,

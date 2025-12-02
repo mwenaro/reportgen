@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useStudentReportGenerator, generateSampleStudentData } from '@/lib/hooks/useStudentReportGenerator'
+import { useStudentReportGenerator, generateSampleStudentData, generateVariedSampleData } from '@/lib/hooks/useStudentReportGenerator'
 import { StudentData } from '@/lib/report-generator/StudentReportGenerator'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -81,6 +81,7 @@ interface AssessmentReport {
   subject?: string
   student?: string
   teacher: string
+  reportScope?: 'single' | 'class'
   totalStudents?: number
   avgScore?: number
   highestScore?: number
@@ -260,12 +261,14 @@ export default function ReportsPage() {
     academicYear: '2024-2025',
     status: 'draft',
     format: 'pdf',
-    downloadCount: 0
+    downloadCount: 0,
+    reportScope: 'single'
   })
 
   // PDF Report Generator
   const {
     generateStudentReport,
+    generateBulkReports,
     previewReport,
     isGenerating,
     generatedReports
@@ -389,8 +392,16 @@ export default function ReportsPage() {
       return
     }
 
-    // If it's a student terminal report, generate actual PDF
+    // Validate student terminal report specific fields
     if (formData.type === 'student_terminal') {
+      if (formData.reportScope === 'single' && !formData.student) {
+        alert('Please enter the student name for individual report')
+        return
+      }
+      if (formData.reportScope === 'class' && !formData.class) {
+        alert('Please enter the class for whole class report')
+        return
+      }
       await handleGenerateStudentReport()
       return
     }
@@ -432,44 +443,88 @@ export default function ReportsPage() {
 
   const handleGenerateStudentReport = async () => {
     try {
-      // Generate sample student data - in real app, this would come from your database
-      const studentData = generateSampleStudentData({
-        name: formData.student || 'John Doe',
-        form: formData.class?.charAt(formData.class.length - 2) || '1',
-        class: formData.class || '1A',
-        term: formData.term?.replace('Term ', '') || '1',
-        year: formData.academicYear || '2024-2025'
-      })
+      if (formData.reportScope === 'class') {
+        // Generate reports for whole class
+        const classStudents = generateVariedSampleData().map(student => ({
+          ...student,
+          form: formData.class?.charAt(formData.class.length - 2) || '3',
+          class: formData.class || '3A',
+          term: formData.term?.replace('Term ', '') || '1',
+          year: formData.academicYear || '2024-2025'
+        }))
 
-      const result = await generateStudentReport(studentData)
-      
-      if (result.success) {
-        // Add to reports list
-        const newReport: AssessmentReport = {
-          id: Date.now().toString(),
-          title: `${studentData.name} - Individual Terminal Report`,
-          type: 'student_terminal',
-          description: `Complete academic performance report for ${studentData.name}`,
-          term: formData.term as any,
-          academicYear: formData.academicYear!,
-          class: studentData.class,
-          student: studentData.name,
-          teacher: formData.teacher!,
-          avgScore: studentData.meanPoints * 8.33, // Convert points to percentage approximation
-          generatedDate: new Date().toISOString().split('T')[0],
-          status: 'generated',
-          format: 'pdf',
-          fileSize: '1.8 MB',
-          downloadCount: 1,
-          createdBy: formData.teacher!,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+        const results = await generateBulkReports(classStudents)
+        const successCount = results.filter(r => r.success).length
+        
+        if (successCount > 0) {
+          // Add bulk report entry to reports list
+          const newReport: AssessmentReport = {
+            id: Date.now().toString(),
+            title: `${formData.class} - Class Terminal Reports (${successCount} students)`,
+            type: 'student_terminal',
+            description: `Individual terminal reports generated for all students in ${formData.class}`,
+            term: formData.term as any,
+            academicYear: formData.academicYear!,
+            class: formData.class!,
+            teacher: formData.teacher!,
+            reportScope: 'class',
+            totalStudents: classStudents.length,
+            avgScore: classStudents.reduce((sum, s) => sum + (s.meanPoints * 8.33), 0) / classStudents.length,
+            generatedDate: new Date().toISOString().split('T')[0],
+            status: 'generated',
+            format: 'pdf',
+            fileSize: `${(successCount * 1.8).toFixed(1)} MB`,
+            downloadCount: successCount,
+            createdBy: formData.teacher!,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+
+          setReports([newReport, ...reports])
+          alert(`Successfully generated ${successCount} student reports for ${formData.class}`)
         }
+      } else {
+        // Generate single student report
+        const studentData = generateSampleStudentData({
+          name: formData.student || 'John Doe',
+          form: formData.class?.charAt(formData.class.length - 2) || '1',
+          class: formData.class || '1A',
+          term: formData.term?.replace('Term ', '') || '1',
+          year: formData.academicYear || '2024-2025'
+        })
 
-        setReports([newReport, ...reports])
-        setIsGenerateDialogOpen(false)
-        resetForm()
+        const result = await generateStudentReport(studentData)
+        
+        if (result.success) {
+          // Add to reports list
+          const newReport: AssessmentReport = {
+            id: Date.now().toString(),
+            title: `${studentData.name} - Individual Terminal Report`,
+            type: 'student_terminal',
+            description: `Complete academic performance report for ${studentData.name}`,
+            term: formData.term as any,
+            academicYear: formData.academicYear!,
+            class: studentData.class,
+            student: studentData.name,
+            teacher: formData.teacher!,
+            reportScope: 'single',
+            avgScore: studentData.meanPoints * 8.33,
+            generatedDate: new Date().toISOString().split('T')[0],
+            status: 'generated',
+            format: 'pdf',
+            fileSize: '1.8 MB',
+            downloadCount: 1,
+            createdBy: formData.teacher!,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+
+          setReports([newReport, ...reports])
+        }
       }
+      
+      setIsGenerateDialogOpen(false)
+      resetForm()
     } catch (error) {
       console.error('Error generating student report:', error)
       alert('Failed to generate report. Please try again.')
@@ -532,6 +587,53 @@ export default function ReportsPage() {
     }
   }
 
+  const handleDownloadSampleReport = async () => {
+    try {
+      // Generate sample student data with realistic information
+      const sampleStudentData = generateSampleStudentData({
+        name: 'Jane Doe',
+        admissionNumber: '2024/001',
+        form: '3',
+        class: '3A',
+        term: '1',
+        year: '2024-2025',
+        gender: 'F',
+        kcpe: 382,
+        position: 5,
+        outOf: 45
+      })
+
+      await generateStudentReport(sampleStudentData, 'Sample_Student_Terminal_Report_Demo.pdf')
+      
+      // Add sample report to the list for demonstration
+      const sampleReport: AssessmentReport = {
+        id: 'sample-' + Date.now().toString(),
+        title: `${sampleStudentData.name} - Sample Terminal Report`,
+        type: 'student_terminal',
+        description: 'Demonstration student terminal report with sample data',
+        term: 'Term 1' as any,
+        academicYear: '2024-2025',
+        class: sampleStudentData.class,
+        student: sampleStudentData.name,
+        teacher: 'Demo Teacher',
+        avgScore: sampleStudentData.meanPoints * 8.33,
+        generatedDate: new Date().toISOString().split('T')[0],
+        status: 'published',
+        format: 'pdf',
+        fileSize: '1.9 MB',
+        downloadCount: 1,
+        createdBy: 'System Demo',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      
+      setReports([sampleReport, ...reports])
+    } catch (error) {
+      console.error('Error generating sample report:', error)
+      alert('Failed to generate sample report. Please try again.')
+    }
+  }
+
   const resetForm = () => {
     setFormData({
       type: 'class_terminal',
@@ -539,7 +641,8 @@ export default function ReportsPage() {
       academicYear: '2024-2025',
       status: 'draft',
       format: 'pdf',
-      downloadCount: 0
+      downloadCount: 0,
+      reportScope: 'single'
     })
   }
 
@@ -598,6 +701,15 @@ export default function ReportsPage() {
           <Button variant="outline" size="sm">
             <Download className="mr-2 h-4 w-4" />
             Export All
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleDownloadSampleReport}
+            disabled={isGenerating}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            {isGenerating ? 'Generating...' : 'Sample Report'}
           </Button>
           <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
             <DialogTrigger asChild>
@@ -727,14 +839,46 @@ export default function ReportsPage() {
                   </div>
                 )}
                 {(formData.type === 'student_terminal' || formData.type === 'progress_report') && (
-                  <div className="space-y-2">
-                    <Label htmlFor="student">Student Name</Label>
-                    <Input
-                      id="student"
-                      value={formData.student || ''}
-                      onChange={(e) => setFormData({...formData, student: e.target.value})}
-                      placeholder="Student full name"
-                    />
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Report Scope</Label>
+                      <Select 
+                        value={formData.reportScope || 'single'} 
+                        onValueChange={(value) => setFormData({...formData, reportScope: value, student: value === 'class' ? '' : formData.student})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="single">Single Student</SelectItem>
+                          <SelectItem value="class">Whole Class</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {formData.reportScope !== 'class' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="student">Student Name</Label>
+                        <Input
+                          id="student"
+                          value={formData.student || ''}
+                          onChange={(e) => setFormData({...formData, student: e.target.value})}
+                          placeholder="Student full name"
+                        />
+                      </div>
+                    )}
+                    
+                    {(formData.reportScope === 'class' || formData.type === 'progress_report') && (
+                      <div className="space-y-2">
+                        <Label htmlFor="class">Class</Label>
+                        <Input
+                          id="class"
+                          value={formData.class || ''}
+                          onChange={(e) => setFormData({...formData, class: e.target.value})}
+                          placeholder="Grade 1A, Form 2B, etc."
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className="space-y-2">
@@ -752,7 +896,9 @@ export default function ReportsPage() {
                   Cancel
                 </Button>
                 <Button onClick={handleGenerateReport} disabled={isGenerating}>
-                  {isGenerating ? 'Generating...' : 'Generate Report'}
+                  {isGenerating ? 'Generating...' : 
+                    formData.type === 'student_terminal' && formData.reportScope === 'class' ? 
+                      'Generate Class Reports' : 'Generate Report'}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -954,6 +1100,9 @@ export default function ReportsPage() {
                             {report.class && <span>Class: {report.class}</span>}
                             {report.subject && <span> • Subject: {report.subject}</span>}
                             {report.student && <span>Student: {report.student}</span>}
+                            {report.reportScope === 'class' && report.type === 'student_terminal' && (
+                              <span className="text-blue-600 font-medium"> • Whole Class</span>
+                            )}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             by {report.teacher}
@@ -1138,9 +1287,20 @@ export default function ReportsPage() {
             <div className="text-center py-8">
               <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-2 text-lg font-medium">No reports found</h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-4">
                 {searchTerm ? 'Try adjusting your search terms.' : 'Get started by generating your first report.'}
               </p>
+              <div className="flex justify-center space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleDownloadSampleReport}
+                  disabled={isGenerating}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  {isGenerating ? 'Generating...' : 'Download Sample Report'}
+                </Button>
+              </div>
             </div>
           )}
           

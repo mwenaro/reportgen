@@ -109,6 +109,8 @@ export default function ExcelImportPage() {
     gradingSystem: '8-4-4'
   })
   const [showProgressDialog, setShowProgressDialog] = useState(false)
+  const [selectedReportTypes, setSelectedReportTypes] = useState<string[]>(['all'])
+  const [bundleStudentReports, setBundleStudentReports] = useState(true)
 
   const [parser, setParser] = useState(() => createExcelParser(selectedGradingSystem))
 
@@ -173,13 +175,85 @@ export default function ExcelImportPage() {
 
     try {
       const reportGenerator = createReportGenerator(excelData, reportOptions)
+      let reports: any[] = []
+      let completed = 0
+      let total = 0
       
-      const reports = await reportGenerator.generateAllReports((progress) => {
+      // Calculate total reports
+      if (reportOptions.includeStudentReports && !bundleStudentReports) {
+        total += excelData.classes.reduce((sum, cls) => sum + cls.totalStudents, 0)
+      } else if (reportOptions.includeStudentReports && bundleStudentReports) {
+        total += 1 // One bundled report
+      }
+      if (reportOptions.includeClassAnalysis) total += excelData.classes.length
+      if (reportOptions.includeSubjectAnalysis) total += 1
+      total += excelData.classes.length // Exam score sheets for each class
+      total += 1 // Summary report
+      
+      const updateProgress = (current: string) => {
         setReportGeneration(prev => ({
           ...prev,
-          progress
+          progress: { completed, total, current }
         }))
-      })
+      }
+
+      // Generate student reports (bundled or individual)
+      if (reportOptions.includeStudentReports) {
+        if (bundleStudentReports) {
+          updateProgress('Generating bundled student reports...')
+          const bundledReport = reportGenerator.generateBundledStudentReports()
+          reports.push(bundledReport)
+          completed++
+        } else {
+          // Generate individual student reports
+          for (const classData of excelData.classes) {
+            if (classData.studentAnalysis) {
+              for (const student of classData.studentAnalysis) {
+                updateProgress(`Generating report for ${student.name}`)
+                const report = reportGenerator.generateStudentReport(student, classData)
+                reports.push(report)
+                completed++
+                await new Promise(resolve => setTimeout(resolve, 50))
+              }
+            }
+          }
+        }
+      }
+
+      // Generate class analysis reports
+      if (reportOptions.includeClassAnalysis) {
+        for (const classData of excelData.classes) {
+          updateProgress(`Generating ${classData.grade} class analysis`)
+          const report = reportGenerator.generateClassAnalysisReport(classData)
+          reports.push(report)
+          completed++
+          await new Promise(resolve => setTimeout(resolve, 50))
+        }
+      }
+
+      // Generate exam score sheets for all classes
+      for (const classData of excelData.classes) {
+        updateProgress(`Generating ${classData.grade} exam score sheet`)
+        const scoreSheet = reportGenerator.generateClassExamScoreSheet(classData)
+        reports.push(scoreSheet)
+        completed++
+        await new Promise(resolve => setTimeout(resolve, 50))
+      }
+
+      // Generate subject analysis report
+      if (reportOptions.includeSubjectAnalysis) {
+        updateProgress('Generating subject analysis report')
+        const report = reportGenerator.generateSubjectAnalysisReport()
+        reports.push(report)
+        completed++
+        await new Promise(resolve => setTimeout(resolve, 50))
+      }
+
+      // Generate summary report
+      updateProgress('Generating summary report')
+      const summaryReport = reportGenerator.generateSummaryReport()
+      reports.push(summaryReport)
+      completed++
 
       setReportGeneration({
         isGenerating: false,
@@ -191,11 +265,6 @@ export default function ExcelImportPage() {
         generatedReports: reports,
         completed: true
       })
-
-      // Auto-download all reports
-      setTimeout(() => {
-        downloadAllReports(reports)
-      }, 1000)
 
     } catch (error) {
       console.error('Error generating reports:', error)
@@ -544,6 +613,16 @@ export default function ExcelImportPage() {
                       <Users className="h-4 w-4 text-blue-500" />
                       <span>Individual student terminal reports ({excelData.classes.reduce((sum, cls) => sum + cls.totalStudents, 0)} students)</span>
                     </div>
+                    <div className="flex items-center space-x-3 ml-6">
+                      <input 
+                        type="checkbox" 
+                        checked={bundleStudentReports}
+                        onChange={(e) => setBundleStudentReports(e.target.checked)}
+                        className="rounded"
+                        disabled={!reportOptions.includeStudentReports}
+                      />
+                      <span className="text-xs text-muted-foreground">Bundle all student reports in one PDF</span>
+                    </div>
                     <div className="flex items-center space-x-2">
                       <input 
                         type="checkbox" 
@@ -563,6 +642,16 @@ export default function ExcelImportPage() {
                       />
                       <FileText className="h-4 w-4 text-purple-500" />
                       <span>Subject analysis and rankings</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        checked={true}
+                        onChange={() => {}}
+                        className="rounded"
+                      />
+                      <FileSpreadsheet className="h-4 w-4 text-orange-500" />
+                      <span>Class exam score sheets ({excelData.classes.length} classes)</span>
                     </div>
                   </div>
                 </div>
@@ -699,7 +788,7 @@ export default function ExcelImportPage() {
 
       {/* Report Generation Progress Dialog */}
       <Dialog open={showProgressDialog} onOpenChange={setShowProgressDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Generating Reports</DialogTitle>
             <DialogDescription>
@@ -724,11 +813,125 @@ export default function ExcelImportPage() {
             )}
             
             {reportGeneration.completed && (
-              <div className="text-center text-green-600">
-                <CheckCircle className="h-8 w-8 mx-auto mb-2" />
-                <div className="font-medium">All reports generated successfully!</div>
-                <div className="text-sm text-muted-foreground mt-2">
-                  {reportGeneration.generatedReports.length} reports generated and downloaded
+              <div className="space-y-4">
+                <div className="text-center text-green-600">
+                  <CheckCircle className="h-8 w-8 mx-auto mb-2" />
+                  <div className="font-medium">All reports generated successfully!</div>
+                  <div className="text-sm text-muted-foreground mt-2">
+                    {reportGeneration.generatedReports.length} reports ready for download
+                  </div>
+                </div>
+                
+                {/* Categorized Report Downloads */}
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {reportGeneration.generatedReports
+                    .filter(r => r.type === 'student-bundle')
+                    .map((report, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                        <div className="flex items-center space-x-2">
+                          <Users className="h-4 w-4 text-blue-500" />
+                          <div>
+                            <div className="text-sm font-medium">All Student Reports (Bundled)</div>
+                            <div className="text-xs text-muted-foreground">{report.className}</div>
+                          </div>
+                        </div>
+                        <Button size="sm" onClick={() => downloadReport(report)}>
+                          <Download className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  
+                  {reportGeneration.generatedReports
+                    .filter(r => r.type === 'student')
+                    .slice(0, 5)
+                    .map((report, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                        <div className="flex items-center space-x-2">
+                          <Users className="h-4 w-4 text-blue-500" />
+                          <div>
+                            <div className="text-sm font-medium">Student Report</div>
+                            <div className="text-xs text-muted-foreground">{report.studentName} - {report.className}</div>
+                          </div>
+                        </div>
+                        <Button size="sm" onClick={() => downloadReport(report)}>
+                          <Download className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  
+                  {reportGeneration.generatedReports.filter(r => r.type === 'student').length > 5 && (
+                    <div className="text-center text-xs text-muted-foreground">
+                      ...and {reportGeneration.generatedReports.filter(r => r.type === 'student').length - 5} more student reports
+                    </div>
+                  )}
+                  
+                  {reportGeneration.generatedReports
+                    .filter(r => r.type === 'class-scoresheet')
+                    .map((report, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-orange-50 rounded">
+                        <div className="flex items-center space-x-2">
+                          <FileSpreadsheet className="h-4 w-4 text-orange-500" />
+                          <div>
+                            <div className="text-sm font-medium">Exam Score Sheet</div>
+                            <div className="text-xs text-muted-foreground">{report.className}</div>
+                          </div>
+                        </div>
+                        <Button size="sm" onClick={() => downloadReport(report)}>
+                          <Download className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  
+                  {reportGeneration.generatedReports
+                    .filter(r => r.type === 'class-analysis')
+                    .map((report, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-green-50 rounded">
+                        <div className="flex items-center space-x-2">
+                          <GraduationCap className="h-4 w-4 text-green-500" />
+                          <div>
+                            <div className="text-sm font-medium">Class Analysis</div>
+                            <div className="text-xs text-muted-foreground">{report.className}</div>
+                          </div>
+                        </div>
+                        <Button size="sm" onClick={() => downloadReport(report)}>
+                          <Download className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  
+                  {reportGeneration.generatedReports
+                    .filter(r => r.type === 'subject-analysis')
+                    .map((report, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-purple-50 rounded">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4 text-purple-500" />
+                          <div>
+                            <div className="text-sm font-medium">Subject Analysis Report</div>
+                            <div className="text-xs text-muted-foreground">All subjects performance</div>
+                          </div>
+                        </div>
+                        <Button size="sm" onClick={() => downloadReport(report)}>
+                          <Download className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  
+                  {reportGeneration.generatedReports
+                    .filter(r => r.type === 'summary')
+                    .map((report, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div className="flex items-center space-x-2">
+                          <School className="h-4 w-4 text-gray-500" />
+                          <div>
+                            <div className="text-sm font-medium">Summary Report</div>
+                            <div className="text-xs text-muted-foreground">Overall school performance</div>
+                          </div>
+                        </div>
+                        <Button size="sm" onClick={() => downloadReport(report)}>
+                          <Download className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -743,7 +946,7 @@ export default function ExcelImportPage() {
                 onClick={() => downloadAllReports(reportGeneration.generatedReports)}
               >
                 <Download className="h-4 w-4 mr-2" />
-                Download Again
+                Download All
               </Button>
             </DialogFooter>
           )}

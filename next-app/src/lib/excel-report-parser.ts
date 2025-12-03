@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx'
 // Types for Excel data structure
 export interface SchoolDetails {
   name: string
+  schoolName?: string
   educationSystem: '8-4-4' | 'CBC'
   box?: string
   tel?: string
@@ -11,6 +12,9 @@ export interface SchoolDetails {
   logo?: string
   principal?: string
   deputy?: string
+  examName?: string
+  term?: string
+  year?: string
 }
 
 export interface StudentRecord {
@@ -28,9 +32,14 @@ export interface SubjectScore {
   points: number
   position?: number
   outOf?: number
+  remarks?: string
 }
 
-export interface StudentAnalysis extends StudentRecord {
+export interface StudentAnalysis {
+  no: number
+  name: string
+  gender: 'M' | 'F'
+  admissionNo?: string
   totalMarks: number
   averageScore: number
   totalPoints: number

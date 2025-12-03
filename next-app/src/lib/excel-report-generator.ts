@@ -18,9 +18,11 @@ export interface ReportGenerationOptions {
 
 export interface GeneratedReport {
   filename: string
-  blob: Blob
+  blob?: Blob
   url: string
-  type: 'student' | 'class' | 'subject' | 'summary'
+  type: 'student' | 'class' | 'subject' | 'summary' | 'student-bundle' | 'class-scoresheet' | 'class-analysis' | 'subject-analysis'
+  className?: string
+  studentName?: string
 }
 
 export class ExcelReportGenerator {
@@ -123,7 +125,7 @@ export class ExcelReportGenerator {
     pdf.text(commentLines, 20, yPos)
 
     // Principal's Remarks
-    yPos += commentLines.length * 5 + 10
+    yPos += 10
     pdf.setFont('helvetica', 'bold')
     pdf.text('PRINCIPAL\'S REMARKS:', 20, yPos)
     yPos += 8
@@ -132,6 +134,15 @@ export class ExcelReportGenerator {
     const principalComment = this.generatePrincipalComment(student)
     const principalLines = pdf.splitTextToSize(principalComment, pageWidth - 40)
     pdf.text(principalLines, 20, yPos)
+    
+    // Principal signature
+    yPos += principalLines.length * 5 + 15
+    pdf.text('Principal: _________________________ Date: ___________', 20, yPos)
+    
+    // Next Term Opens On
+    yPos += 15
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('NEXT TERM OPENS ON: ________________________', 20, yPos)
 
     // Footer
     this.addReportFooter(pdf, pageWidth, pageHeight)
@@ -140,7 +151,14 @@ export class ExcelReportGenerator {
     const blob = pdf.output('blob')
     const url = URL.createObjectURL(blob)
 
-    return { filename, blob, url, type: 'student' }
+    return { 
+      filename, 
+      blob, 
+      url, 
+      type: 'student',
+      studentName: student.name,
+      className: classData.grade
+    }
   }
 
   // Generate class analysis report
@@ -268,7 +286,13 @@ export class ExcelReportGenerator {
     const blob = pdf.output('blob')
     const url = URL.createObjectURL(blob)
 
-    return { filename, blob, url, type: 'class' }
+    return { 
+      filename, 
+      blob, 
+      url, 
+      type: 'class-analysis',
+      className: classData.grade
+    }
   }
 
   // Generate subject analysis report
@@ -326,35 +350,46 @@ export class ExcelReportGenerator {
         styles: { fontSize: 8, cellPadding: 1.5 }
       })
 
-      // Top Performers by Subject (if there's space)
+      // Top and Bottom Performers by Subject
       this.excelData.subjectAnalysis.forEach((subject, index) => {
-        if (subject.topPerformers.length > 0 && index < 3) { // Limit to first 3 subjects for space
-          yPos = (pdf as any).lastAutoTable?.finalY + 15 || yPos + 40
-          
-          if (yPos > 250) { // Check if we need a new page
+        if (subject.topPerformers.length > 0 && index < 4) { // Limit to first 4 subjects for space
+          if (yPos > 200) { // Check if we need a new page
             pdf.addPage()
             yPos = 30
           }
-
+          
           pdf.setFont('helvetica', 'bold')
-          pdf.text(`TOP PERFORMERS - ${subject.subject.toUpperCase()}`, 20, yPos)
+          pdf.text(`${subject.subject.toUpperCase()} - TOP & BOTTOM PERFORMERS`, 20, yPos)
+          yPos += 8
 
-          yPos += 10
-          const performerData = subject.topPerformers.slice(0, 5).map((performer, idx) => [
-            idx + 1,
+          // Top 3 performers
+          const topPerformers = subject.topPerformers.slice(0, 3).map((performer, idx) => [
+            `Top ${idx + 1}`,
             performer.name,
             performer.score.toString() + '%',
             performer.class
           ])
+          
+          // Bottom 3 performers (get from end of sorted list)
+          const bottomPerformers = subject.topPerformers.slice(-3).reverse().map((performer, idx) => [
+            `Bot ${idx + 1}`,
+            performer.name,
+            performer.score.toString() + '%',
+            performer.class
+          ])
+          
+          const allPerformers = [...topPerformers, ...bottomPerformers]
 
           autoTable(pdf, {
             startY: yPos,
-            head: [['Rank', 'Name', 'Score', 'Class']],
-            body: performerData,
+            head: [['Position', 'Name', 'Score', 'Class']],
+            body: allPerformers,
             theme: 'grid',
             headStyles: { fillColor: [52, 152, 219], textColor: 255 },
             styles: { fontSize: 8, cellPadding: 1.5 }
           })
+          
+          yPos = (pdf as any).lastAutoTable?.finalY + 15 || yPos + 40
         }
       })
     }
@@ -363,7 +398,12 @@ export class ExcelReportGenerator {
     const blob = pdf.output('blob')
     const url = URL.createObjectURL(blob)
 
-    return { filename, blob, url, type: 'subject' }
+    return { 
+      filename, 
+      blob, 
+      url, 
+      type: 'subject-analysis'
+    }
   }
 
   // Generate comprehensive summary report
@@ -446,6 +486,27 @@ export class ExcelReportGenerator {
   }
 
   // Add school header to PDF
+  private addHeader(pdf: jsPDF, title: string, subtitle?: string) {
+    const pageWidth = pdf.internal.pageSize.width
+    
+    // Title
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(16)
+    const titleWidth = pdf.getTextWidth(title)
+    pdf.text(title, (pageWidth - titleWidth) / 2, 25)
+    
+    // Subtitle
+    if (subtitle) {
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(12)
+      const subtitleWidth = pdf.getTextWidth(subtitle)
+      pdf.text(subtitle, (pageWidth - subtitleWidth) / 2, 35)
+    }
+    
+    // Line under header
+    pdf.line(20, 45, pageWidth - 20, 45)
+  }
+
   private addSchoolHeader(pdf: jsPDF, pageWidth: number) {
     const school = this.excelData.schoolDetails
     
@@ -641,6 +702,443 @@ export class ExcelReportGenerator {
     onProgress?.({ completed, total, current: 'All reports generated successfully' })
     
     return reports
+  }
+
+  generateClassExamScoreSheet(classData: ClassData): GeneratedReport {
+    const pdf = new jsPDF('l', 'mm', 'a4') // Landscape orientation for wider tables
+    
+    // Add header
+    this.addHeader(pdf, `${classData.grade} - Exam Score Sheet`, 
+      `${this.excelData.schoolDetails?.examName || 'Exam'} ${this.excelData.schoolDetails?.term || 'Term'} ${this.excelData.schoolDetails?.year || ''}`)
+    
+    let yPos = 60
+    
+    // School details if available
+    if (this.excelData.schoolDetails) {
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(10)
+      if (this.excelData.schoolDetails.schoolName) {
+        pdf.text(`School: ${this.excelData.schoolDetails.schoolName}`, 20, yPos)
+        yPos += 6
+      }
+      if (this.excelData.schoolDetails.educationSystem) {
+        pdf.text(`Education System: ${this.excelData.schoolDetails.educationSystem}`, 20, yPos)
+        yPos += 10
+      }
+    }
+    
+    // Prepare table data
+    const students = classData.studentAnalysis || []
+    
+    // Calculate rankings
+    const rankedStudents = [...students].sort((a, b) => {
+      const totalA = a.totalMarks || 0
+      const totalB = b.totalMarks || 0
+      return totalB - totalA
+    })
+    
+    // Create table headers - get all unique subjects
+    const allSubjects = Array.from(new Set(
+      students.flatMap(s => s.subjects?.map(score => score.subject) || [])
+    )).sort()
+    
+    const headers = ['No.', 'Student Name', 'Gender', ...allSubjects, 'Total', 'Avg', 'Grade', 'Rank']
+    
+    // Create table body
+    const tableData = rankedStudents.map((student, index) => {
+      const row = [
+        (index + 1).toString(),
+        student.name,
+        student.gender || 'N/A'
+      ]
+      
+      // Add subject scores
+      allSubjects.forEach(subject => {
+        const score = student.subjects?.find(s => s.subject === subject)?.score || 0
+        row.push(score.toString())
+      })
+      
+      // Add totals and grade
+      row.push(
+        (student.totalMarks || 0).toString(),
+        (student.averageScore || 0).toFixed(1),
+        student.meanGrade || 'N/A',
+        (index + 1).toString()
+      )
+      
+      return row
+    })
+    
+    // Generate table
+    autoTable(pdf, {
+      startY: yPos,
+      head: [headers],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [52, 152, 219], 
+        textColor: 255,
+        fontSize: 8
+      },
+      styles: { 
+        fontSize: 7, 
+        cellPadding: 1,
+        overflow: 'linebreak' as const
+      },
+      columnStyles: {
+        0: { cellWidth: 8 },  // No
+        1: { cellWidth: 25 }, // Name
+        2: { cellWidth: 10 }, // Gender
+      }
+    })
+    
+    yPos = (pdf as any).lastAutoTable?.finalY + 20 || yPos + 100
+    
+    // Add class statistics
+    if (yPos > 180) { // Check for landscape page height
+      pdf.addPage()
+      yPos = 30
+    }
+    
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('CLASS STATISTICS', 20, yPos)
+    yPos += 10
+    
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(10)
+    
+    const totalStudents = students.length
+    const classAverage = students.reduce((sum, s) => sum + (s.averageScore || 0), 0) / totalStudents
+    const passRate = (students.filter(s => (s.averageScore || 0) >= 50).length / totalStudents) * 100
+    
+    const stats = [
+      `Total Students: ${totalStudents}`,
+      `Class Average: ${classAverage.toFixed(1)}%`,
+      `Highest Score: ${Math.max(...students.map(s => s.totalMarks || 0))}`,
+      `Lowest Score: ${Math.min(...students.map(s => s.totalMarks || 0))}`,
+      `Pass Rate: ${passRate.toFixed(1)}%`
+    ]
+    
+    stats.forEach(stat => {
+      pdf.text(stat, 20, yPos)
+      yPos += 6
+    })
+    
+    const buffer = pdf.output('arraybuffer')
+    const blob = new Blob([buffer], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    
+    return {
+      filename: `${classData.grade}_exam_scoresheet.pdf`,
+      url,
+      type: 'class-scoresheet',
+      className: classData.grade
+    }
+  }
+
+  generateBundledStudentReports(): GeneratedReport {
+    const pdf = new jsPDF()
+    let isFirstReport = true
+    let studentCount = 0
+    
+    this.excelData.classes.forEach(classData => {
+      if (classData.studentAnalysis) {
+        classData.studentAnalysis.forEach(student => {
+          if (!isFirstReport) {
+            pdf.addPage()
+          }
+          isFirstReport = false
+          studentCount++
+          
+          // Generate student report content on current page
+          this.addStudentReportContent(pdf, student, classData)
+        })
+      }
+    })
+    
+    const buffer = pdf.output('arraybuffer')
+    const blob = new Blob([buffer], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    
+    return {
+      filename: `all_student_reports_bundled.pdf`,
+      url,
+      type: 'student-bundle',
+      className: `${studentCount} Students`
+    }
+  }
+  
+  private addStudentReportContent(pdf: jsPDF, student: StudentAnalysis, classData: ClassData) {
+    const pageWidth = pdf.internal.pageSize.width
+    const pageHeight = pdf.internal.pageSize.height
+
+    // Add full school header (same as individual reports)
+    this.addSchoolHeader(pdf, pageWidth)
+
+    // Report Title
+    pdf.setFontSize(16)
+    pdf.setFont('helvetica', 'bold')
+    const title = 'TERMINAL EXAMINATION REPORT'
+    const titleWidth = pdf.getTextWidth(title)
+    pdf.text(title, (pageWidth - titleWidth) / 2, 60)
+
+    // Student Info Section (Compact layout)
+    let yPos = 75
+    pdf.setFontSize(10)
+    pdf.setFont('helvetica', 'normal')
+    
+    // Student details in two columns
+    const studentInfo = [
+      ['Name:', student.name],
+      ['Class:', classData.grade],
+      ['Admission No:', student.admissionNo || 'N/A'],
+      ['Gender:', student.gender || 'N/A']
+    ]
+
+    // Display in two columns to save space
+    for (let i = 0; i < studentInfo.length; i += 2) {
+      // Left column
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(studentInfo[i][0], 20, yPos)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(studentInfo[i][1].toString(), 60, yPos)
+      
+      // Right column if exists
+      if (i + 1 < studentInfo.length) {
+        pdf.setFont('helvetica', 'bold')
+        pdf.text(studentInfo[i + 1][0], 120, yPos)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text(studentInfo[i + 1][1].toString(), 160, yPos)
+      }
+      yPos += 6
+    }
+
+    yPos += 5
+    
+    // Subjects Table (Compact)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(10)
+    pdf.text('SUBJECT PERFORMANCE', 20, yPos)
+    yPos += 8
+
+    // Generate subjects table with compact layout
+    const subjectsData = student.subjects?.map((score, index) => [
+      index + 1,
+      score.subject,
+      score.score,
+      score.grade,
+      score.points || 'N/A',
+      score.remarks || this.getRemarks(score.score)
+    ]) || []
+
+    autoTable(pdf, {
+      startY: yPos,
+      head: [['No.', 'Subject', 'Marks', 'Grade', 'Points', 'Remarks']],
+      body: subjectsData,
+      theme: 'striped',
+      headStyles: { fillColor: [52, 73, 94], textColor: 255, fontSize: 8 },
+      styles: { fontSize: 8, cellPadding: 2 },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      columnStyles: {
+        0: { cellWidth: 12 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 18 },
+        3: { cellWidth: 15 },
+        4: { cellWidth: 15 },
+        5: { cellWidth: 35 }
+      }
+    })
+
+    yPos = (pdf as any).lastAutoTable?.finalY + 8 || yPos + 60
+
+    // Summary Section (Compact)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(9)
+    pdf.text('SUMMARY', 20, yPos)
+    yPos += 6
+
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8)
+    const summaryData = [
+      ['Total Marks:', student.totalMarks?.toString() || '0'],
+      ['Average Score:', `${(student.averageScore || 0).toFixed(1)}%`],
+      ['Mean Grade:', student.meanGrade || 'N/A'],
+      ['Class Position:', `${student.overallPosition || 'N/A'} out of ${classData.totalStudents || 'N/A'}`],
+    ]
+
+    // Display summary in two columns
+    for (let i = 0; i < summaryData.length; i += 2) {
+      // Left column
+      pdf.text(summaryData[i][0], 20, yPos)
+      pdf.text(summaryData[i][1], 70, yPos)
+      
+      // Right column if exists
+      if (i + 1 < summaryData.length) {
+        pdf.text(summaryData[i + 1][0], 120, yPos)
+        pdf.text(summaryData[i + 1][1], 170, yPos)
+      }
+      yPos += 5
+    }
+
+    // Performance Chart
+    yPos += 5
+    this.addPerformanceChart(pdf, student, yPos, pageWidth)
+    yPos += 50 // Space for chart
+
+    // Performance Comments (Compact)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(9)
+    pdf.text('TEACHER\'S COMMENTS:', 20, yPos)
+    yPos += 6
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8)
+    
+    const comment = this.generateStudentComment(student)
+    const commentLines = pdf.splitTextToSize(comment, pageWidth - 40)
+    // Limit comment to 2 lines to save space
+    const limitedCommentLines = commentLines.slice(0, 2)
+    pdf.text(limitedCommentLines, 20, yPos)
+    
+    // Teacher signature
+    yPos += limitedCommentLines.length * 4 + 8
+    pdf.setFontSize(7)
+    pdf.text('Class Teacher: _________________________ Date: ___________', 20, yPos)
+
+    // Principal's Remarks (Compact)
+    yPos += 8
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(9)
+    pdf.text('PRINCIPAL\'S REMARKS:', 20, yPos)
+    yPos += 6
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8)
+    
+    const principalRemarks = this.generatePrincipalComment(student)
+    const remarksLines = pdf.splitTextToSize(principalRemarks, pageWidth - 40)
+    // Limit principal remarks to 2 lines
+    const limitedPrincipalLines = remarksLines.slice(0, 2)
+    pdf.text(limitedPrincipalLines, 20, yPos)
+    
+    // Principal signature
+    yPos += limitedPrincipalLines.length * 4 + 8
+    pdf.setFontSize(7)
+    pdf.text('Principal: _________________________ Date: ___________', 20, yPos)
+    
+    // Next Term Opens On
+    yPos += 8
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(8)
+    pdf.text('NEXT TERM OPENS ON: ________________________', 20, yPos)
+
+    // Footer
+    this.addReportFooter(pdf, pageWidth, pageHeight)
+  }
+  
+  private getRemarks(score: number): string {
+    if (score >= 80) return 'Excellent'
+    if (score >= 70) return 'Very Good'
+    if (score >= 60) return 'Good'
+    if (score >= 50) return 'Average'
+    if (score >= 40) return 'Below Average'
+    return 'Poor'
+  }
+  
+  private addPerformanceChart(pdf: jsPDF, student: StudentAnalysis, startY: number, pageWidth: number) {
+    const chartWidth = pageWidth - 60
+    const chartHeight = 40
+    const chartX = 30
+    const chartY = startY + 5
+    
+    // Chart title
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(9)
+    pdf.text('PERFORMANCE CHART', chartX, startY)
+    
+    // Draw chart background
+    pdf.setDrawColor(200, 200, 200)
+    pdf.rect(chartX, chartY, chartWidth, chartHeight)
+    
+    // Draw grid lines
+    pdf.setDrawColor(230, 230, 230)
+    for (let i = 1; i <= 4; i++) {
+      const y = chartY + (chartHeight * i / 5)
+      pdf.line(chartX, y, chartX + chartWidth, y)
+    }
+    
+    if (!student.subjects || student.subjects.length === 0) return
+    
+    const subjects = student.subjects
+    const maxSubjects = Math.min(subjects.length, 8) // Limit to 8 subjects for readability
+    const barWidth = chartWidth / (maxSubjects * 2)
+    const maxScore = 100
+    
+    // Draw bars and line
+    const linePoints: { x: number; y: number }[] = []
+    
+    subjects.slice(0, maxSubjects).forEach((subject, index) => {
+      const x = chartX + (index * 2 + 1) * barWidth
+      const barHeight = (subject.score / maxScore) * chartHeight
+      const y = chartY + chartHeight - barHeight
+      
+      // Draw bar (column)
+      pdf.setFillColor(52, 152, 219) // Blue bars
+      pdf.rect(x, y, barWidth, barHeight, 'F')
+      
+      // Store point for line graph
+      linePoints.push({ x: x + barWidth / 2, y })
+      
+      // Subject label
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(8)
+      const label = subject.subject.length > 6 ? subject.subject.substring(0, 6) : subject.subject
+      const labelWidth = pdf.getTextWidth(label)
+      pdf.text(label, x + barWidth / 2 - labelWidth / 2, chartY + chartHeight + 10)
+      
+      // Score label
+      pdf.text(subject.score.toString(), x + barWidth / 2 - 5, y - 2)
+    })
+    
+    // Draw line graph connecting the points
+    if (linePoints.length > 1) {
+      pdf.setDrawColor(231, 76, 60) // Red line
+      pdf.setLineWidth(2)
+      for (let i = 0; i < linePoints.length - 1; i++) {
+        pdf.line(linePoints[i].x, linePoints[i].y, linePoints[i + 1].x, linePoints[i + 1].y)
+      }
+      
+      // Draw points
+      pdf.setFillColor(231, 76, 60)
+      linePoints.forEach(point => {
+        pdf.circle(point.x, point.y, 1.5, 'F')
+      })
+    }
+    
+    // Y-axis labels
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8)
+    for (let i = 0; i <= 5; i++) {
+      const score = (i * 20).toString()
+      const y = chartY + chartHeight - (i * chartHeight / 5)
+      pdf.text(score, chartX - 10, y + 2)
+    }
+    
+    // Legend (Compact)
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(7)
+    const legendY = chartY + chartHeight + 15
+    
+    // Bar legend
+    pdf.setFillColor(52, 152, 219)
+    pdf.rect(chartX, legendY, 6, 4, 'F')
+    pdf.text('Scores', chartX + 8, legendY + 3)
+    
+    // Line legend
+    pdf.setDrawColor(231, 76, 60)
+    pdf.setLineWidth(1)
+    pdf.line(chartX + 40, legendY + 2, chartX + 46, legendY + 2)
+    pdf.setFillColor(231, 76, 60)
+    pdf.circle(chartX + 43, legendY + 2, 1, 'F')
+    pdf.text('Trend', chartX + 48, legendY + 3)
   }
 }
 
